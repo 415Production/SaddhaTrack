@@ -11,7 +11,6 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
         
-        /* --- MOBILE APP FEEL --- */
         html, body {
             font-family: 'Sarabun', sans-serif;
             width: 100%; height: 100%; position: fixed; overflow: hidden; background-color: #ffffff;
@@ -26,44 +25,38 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        .nav-float { box-shadow: 0 20px 40px -10px rgba(0,0,0,0.10); }
         .leaflet-control-zoom { display: none !important; }
         .leaflet-popup-content-wrapper { border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); padding: 0; overflow: hidden; }
         .leaflet-popup-content { margin: 0; width: 260px !important; }
         .leaflet-popup-tip { background: white; }
         
-        /* จุด GPS สีส้ม */
         .gps-ring { border: 3px solid #f97316; border-radius: 30px; height: 18px; width: 18px; animation: pulsate 1.5s ease-out infinite; opacity: 0.0; margin: -3px 0 0 -3px; }
         @keyframes pulsate { 0% { transform: scale(0.1, 0.1); opacity: 0.0; } 50% { opacity: 1.0; } 100% { transform: scale(1.2, 1.2); opacity: 0.0; } }
 
         /* Z-INDEX SYSTEM */
         .z-map          { z-index: 0; }
-        .z-map-controls { z-index: 10; }
-        .z-header       { z-index: 20; }
-        .z-view         { z-index: 30; } 
-        .z-subview      { z-index: 40; } 
-        .z-nav          { z-index: 50; } 
-        .z-modal        { z-index: 60; } 
-        .z-sidebar-overlay { z-index: 70; } 
-        .z-sidebar      { z-index: 71; }
-        .z-auth         { z-index: 100; } 
+        .z-header       { z-index: 2000; }
+        .z-search-btn   { z-index: 2500; } /* ดันปุ่มค้นหาขึ้นมาเหนือแผนที่และ Header */
+        .z-view         { z-index: 4000; display: none; } 
+        .z-view.active  { display: flex; } 
+        .z-subview      { z-index: 6000; display: none; } 
+        .z-subview.active { display: flex; }
+        .z-nav          { z-index: 8000; } 
+        .z-modal        { z-index: 9000; display: none; } 
+        .z-modal.active { display: flex; }
+        .z-sidebar-overlay { z-index: 99000; } 
+        .z-sidebar      { z-index: 99100; }
+        .z-auth         { z-index: 99999; } 
 
         .fade-in { animation: fadeIn 0.4s ease-out; }
         .fade-out { animation: fadeOut 0.4s ease-in forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-10px); visibility: hidden; } }
         
-        .slide-in { animation: slideIn 0.3s ease-out forwards; }
-        .slide-out { animation: slideOut 0.3s ease-in forwards; }
-        @keyframes slideIn { from { transform: translateX(-100%); } to { transform: translateX(0); } }
-        @keyframes slideOut { from { transform: translateX(0); } to { transform: translateX(-100%); } }
-        
         .star { cursor: pointer; transition: color 0.2s; }
         .star.active { color: #facc15; } .star.inactive { color: #e2e8f0; }
         .review-star { cursor: pointer; transition: color 0.2s; }
         .review-star.active { color: #facc15; } .review-star.inactive { color: #e2e8f0; }
-        .heart-icon { transition: transform 0.2s; }
-        .heart-icon:active { transform: scale(1.3); }
 
         .switch { position: relative; display: inline-block; width: 50px; height: 28px; }
         .switch input { opacity: 0; width: 0; height: 0; }
@@ -71,53 +64,48 @@
         .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         input:checked + .slider { background-color: #3b82f6; }
         input:checked + .slider:before { transform: translateX(22px); }
-
         .filter-chip.active { background-color: white !important; color: #2563eb !important; border-color: white !important; font-weight: 800; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body class="relative bg-white">
 
-    <!-- AUTH VIEW (LOGIN / REGISTER) -->
+    <!-- AUTH VIEW -->
     <div id="authView" class="fixed inset-0 bg-white flex-col items-center justify-center z-auth fade-in hidden">
         <button onclick="closeAuth()" class="absolute top-6 right-6 text-slate-400 hover:text-slate-900 bg-slate-50 rounded-full p-2 transition-colors z-20">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
-        
         <div class="bg-white p-8 rounded-[2.5rem] w-11/12 max-w-sm relative z-10 w-full">
             <div class="text-center mb-8">
                 <img src="SaddhaTrack_Logo.png" alt="SaddhaTrack Logo" class="mx-auto mb-4 object-contain" style="width: 120px; height: 120px;">
-                <p class="text-slate-500 text-sm mt-2 font-medium">เข้าสู่ระบบเพื่อบันทึกข้อมูลของคุณ</p>
+                <p class="text-slate-500 text-sm mt-2 font-medium" data-i18n="auth_desc">เข้าสู่ระบบเพื่อบันทึกข้อมูลของคุณ</p>
             </div>
-
-            <!-- Login Form -->
             <form id="loginForm" onsubmit="handleAuth(event, 'login')" class="space-y-4">
-                <div><input type="text" id="loginUser" required placeholder="ชื่อผู้ใช้งาน (Username)" class="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl p-4 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-400 transition-all"></div>
-                <div><input type="password" id="loginPass" required placeholder="รหัสผ่าน (Password)" class="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl p-4 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-400 transition-all"></div>
-                <button type="submit" id="loginBtn" class="w-full bg-blue-600 text-white font-bold text-lg py-4 rounded-2xl shadow-xl shadow-blue-600/20 hover:scale-[1.02] active:scale-95 transition-all mt-4">เข้าสู่ระบบ</button>
-                <p class="text-center text-slate-500 text-sm mt-4">ยังไม่มีบัญชี? <span onclick="toggleAuthMode()" class="text-orange-500 font-bold cursor-pointer hover:underline">สมัครสมาชิก</span></p>
+                <div><input type="text" id="loginUser" required placeholder="Username" class="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl p-4 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-400 transition-all"></div>
+                <div><input type="password" id="loginPass" required placeholder="Password" class="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl p-4 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-400 transition-all"></div>
+                <button type="submit" id="loginBtn" class="w-full bg-blue-600 text-white font-bold text-lg py-4 rounded-2xl shadow-xl shadow-blue-600/20 hover:scale-[1.02] active:scale-95 transition-all mt-4" data-i18n="login">เข้าสู่ระบบ</button>
+                <p class="text-center text-slate-500 text-sm mt-4"><span data-i18n="auth_no_acc">ยังไม่มีบัญชี?</span> <span onclick="toggleAuthMode()" class="text-orange-500 font-bold cursor-pointer hover:underline" data-i18n="register">สมัครสมาชิก</span></p>
             </form>
-
-            <!-- Register Form -->
             <form id="registerForm" onsubmit="handleAuth(event, 'register')" class="space-y-4 hidden">
-                <div><input type="text" id="regName" required placeholder="ชื่อของคุณ (แสดงในแอป)" class="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-400 transition-all"></div>
-                <div><input type="text" id="regUser" required placeholder="ชื่อผู้ใช้งาน (Username)" class="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-400 transition-all"></div>
+                <div><input type="text" id="regName" required placeholder="Name (Display)" class="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-400 transition-all"></div>
+                <div><input type="text" id="regUser" required placeholder="Username" class="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-400 transition-all"></div>
                 <div class="grid grid-cols-2 gap-2">
-                    <input type="password" id="regPass" required placeholder="รหัสผ่าน" class="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-400 transition-all text-sm">
-                    <input type="password" id="regPassConfirm" required placeholder="ยืนยันรหัสผ่าน" class="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-400 transition-all text-sm">
+                    <input type="password" id="regPass" required placeholder="Password" class="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-400 transition-all text-sm">
+                    <input type="password" id="regPassConfirm" required placeholder="Confirm Password" class="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-400 transition-all text-sm">
                 </div>
-                <button type="submit" id="regBtn" class="w-full bg-blue-600 text-white font-bold text-lg py-4 rounded-2xl shadow-xl shadow-blue-600/20 hover:scale-[1.02] active:scale-95 transition-all mt-4">สมัครสมาชิก</button>
-                <p class="text-center text-slate-500 text-sm mt-4">มีบัญชีอยู่แล้ว? <span onclick="toggleAuthMode()" class="text-orange-500 font-bold cursor-pointer hover:underline">เข้าสู่ระบบ</span></p>
+                <button type="submit" id="regBtn" class="w-full bg-blue-600 text-white font-bold text-lg py-4 rounded-2xl shadow-xl shadow-blue-600/20 hover:scale-[1.02] active:scale-95 transition-all mt-4" data-i18n="register">สมัครสมาชิก</button>
+                <p class="text-center text-slate-500 text-sm mt-4"><span data-i18n="auth_have_acc">มีบัญชีอยู่แล้ว?</span> <span onclick="toggleAuthMode()" class="text-orange-500 font-bold cursor-pointer hover:underline" data-i18n="login">เข้าสู่ระบบ</span></p>
             </form>
         </div>
     </div>
 
-    <!-- MAIN APP CONTENT (MAP) -->
+    <!-- MAP VIEW -->
     <div id="mapView" class="w-full h-full relative z-map">
         <div id="map" class="absolute inset-0 bg-slate-50"></div>
     </div>
 
-    <!-- ปุ่มค้นหาบริเวณนี้ -->
-    <button id="searchAreaBtn" onclick="searchCurrentArea()" class="hidden absolute top-40 left-1/2 -translate-x-1/2 z-map-controls bg-blue-600 text-white px-5 py-2.5 rounded-full font-bold shadow-xl shadow-blue-600/20 active:scale-95 transition-all text-sm flex items-center gap-2">
+    <!-- BUTTON: SEARCH AREA -->
+    <!-- ปรับตำแหน่งให้อยู่ใต้ช่องค้นหาและ Z-index สูงพอ -->
+    <button id="searchAreaBtn" onclick="searchCurrentArea()" class="hidden absolute top-36 left-1/2 -translate-x-1/2 z-search-btn bg-blue-600 text-white px-5 py-2.5 rounded-full font-bold shadow-xl shadow-blue-600/20 active:scale-95 transition-all text-sm flex items-center gap-2" data-i18n="search_area">
         ค้นหาบริเวณนี้
     </button>
 
@@ -125,12 +113,19 @@
     <div class="absolute top-0 left-0 w-full z-header pt-safe bg-gradient-to-b from-white via-white/90 to-transparent backdrop-blur-md pb-6 pointer-events-none">
         <div class="px-6 flex justify-between items-center pointer-events-auto mt-2">
             <div>
-                <p class="text-[11px] text-slate-500 font-medium tracking-wide uppercase mb-0.5">ยินดีต้อนรับ</p>
-                <h1 id="greetingName" class="text-2xl font-bold text-slate-900 tracking-tight">ผู้ใช้งานทั่วไป</h1>
+                <p class="text-[11px] text-slate-500 font-medium tracking-wide uppercase mb-0.5" data-i18n="welcome">ยินดีต้อนรับ</p>
+                <h1 id="greetingName" class="text-2xl font-bold text-slate-900 tracking-tight" data-i18n="guest">ผู้ใช้งานทั่วไป</h1>
             </div>
-            <button onclick="openProfile()" class="w-11 h-11 rounded-full bg-white border border-slate-200 shadow-sm flex items-center justify-center overflow-hidden hover:ring-2 hover:ring-blue-300 transition-all">
-                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-            </button>
+            <div class="flex items-center gap-2">
+                <!-- LANGUAGE TOGGLE -->
+                <button onclick="toggleLanguage()" class="px-3 py-1.5 rounded-full bg-slate-100 border border-slate-200 shadow-sm text-xs font-bold text-blue-600 hover:bg-slate-200 transition-colors flex items-center gap-1">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 15h4.498"></path></svg>
+                    <span id="langLabel">TH</span>
+                </button>
+                <button onclick="openProfile()" class="w-11 h-11 rounded-full bg-white border border-slate-200 shadow-sm flex items-center justify-center overflow-hidden hover:ring-2 hover:ring-blue-300 transition-all">
+                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                </button>
+            </div>
         </div>
 
         <div class="px-6 mt-4 pointer-events-auto">
@@ -138,7 +133,7 @@
                 <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-600 transition-colors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 </div>
-                <input type="text" id="searchInput" placeholder="ค้นหาสถานที่หรือศาลเจ้า..." onkeyup="handleGlobalSearch()"
+                <input type="text" id="searchInput" data-i18n-placeholder="search_plc" placeholder="ค้นหาสถานที่หรือศาลเจ้า..." onkeyup="handleGlobalSearch()"
                     class="w-full bg-white border border-slate-200 text-slate-800 rounded-2xl py-3.5 pl-12 pr-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm font-medium">
                 <div id="searchStatus" class="absolute right-4 top-3.5"></div>
                 <ul id="suggestionList" class="hidden absolute top-full left-0 w-full mt-2 bg-white border border-slate-200 rounded-2xl shadow-xl max-h-60 overflow-y-auto z-[2000] p-1"></ul>
@@ -147,22 +142,22 @@
 
         <div class="mt-4 pointer-events-auto">
             <div class="flex gap-2.5 overflow-x-auto px-6 pb-2 no-scrollbar snap-x">
-                <button onclick="toggleFilter('all')" id="filter-all" class="filter-chip active flex-shrink-0 px-5 py-2 rounded-full text-xs font-bold bg-blue-600 text-white shadow-md transition-transform snap-start">ทั้งหมด</button>
+                <button onclick="toggleFilter('all')" id="filter-all" class="filter-chip active flex-shrink-0 px-5 py-2 rounded-full text-xs font-bold bg-blue-600 text-white shadow-md transition-transform snap-start" data-i18n="all">ทั้งหมด</button>
                 <div class="w-[1px] bg-slate-200 h-5 self-center mx-1"></div>
-                <button onclick="toggleFilter('topic', 'love')" id="filter-love" class="filter-chip flex-shrink-0 px-5 py-2 rounded-full text-xs font-medium bg-white text-slate-600 border border-slate-200 shadow-sm hover:bg-blue-50 transition-colors snap-start">❤️ ความรัก</button>
-                <button onclick="toggleFilter('topic', 'wealth')" id="filter-wealth" class="filter-chip flex-shrink-0 px-5 py-2 rounded-full text-xs font-medium bg-white text-slate-600 border border-slate-200 shadow-sm hover:bg-blue-50 transition-colors snap-start">💰 โชคลาภ</button>
-                <button onclick="toggleFilter('topic', 'work')" id="filter-work" class="filter-chip flex-shrink-0 px-5 py-2 rounded-full text-xs font-medium bg-white text-slate-600 border border-slate-200 shadow-sm hover:bg-blue-50 transition-colors snap-start">💼 การงาน</button>
-                <button onclick="toggleFilter('topic', 'health')" id="filter-health" class="filter-chip flex-shrink-0 px-5 py-2 rounded-full text-xs font-medium bg-white text-slate-600 border border-slate-200 shadow-sm hover:bg-blue-50 transition-colors snap-start">💪 สุขภาพ</button>
+                <button onclick="toggleFilter('topic', 'love')" id="filter-love" class="filter-chip flex-shrink-0 px-5 py-2 rounded-full text-xs font-medium bg-white text-slate-600 border border-slate-200 shadow-sm hover:bg-blue-50 transition-colors snap-start" data-i18n="love">❤️ ความรัก</button>
+                <button onclick="toggleFilter('topic', 'wealth')" id="filter-wealth" class="filter-chip flex-shrink-0 px-5 py-2 rounded-full text-xs font-medium bg-white text-slate-600 border border-slate-200 shadow-sm hover:bg-blue-50 transition-colors snap-start" data-i18n="wealth">💰 โชคลาภ</button>
+                <button onclick="toggleFilter('topic', 'work')" id="filter-work" class="filter-chip flex-shrink-0 px-5 py-2 rounded-full text-xs font-medium bg-white text-slate-600 border border-slate-200 shadow-sm hover:bg-blue-50 transition-colors snap-start" data-i18n="work">💼 การงาน</button>
+                <button onclick="toggleFilter('topic', 'health')" id="filter-health" class="filter-chip flex-shrink-0 px-5 py-2 rounded-full text-xs font-medium bg-white text-slate-600 border border-slate-200 shadow-sm hover:bg-blue-50 transition-colors snap-start" data-i18n="health">💪 สุขภาพ</button>
                 <div class="w-[1px] bg-slate-200 h-5 self-center mx-1"></div>
-                <button onclick="toggleFilter('religion', 'buddhist')" id="filter-buddhist" class="filter-chip flex-shrink-0 px-5 py-2 rounded-full text-xs font-medium bg-white text-slate-600 border border-slate-200 shadow-sm hover:bg-blue-50 transition-colors snap-start">☸️ พุทธ</button>
-                <button onclick="toggleFilter('religion', 'hindu')" id="filter-hindu" class="filter-chip flex-shrink-0 px-5 py-2 rounded-full text-xs font-medium bg-white text-slate-600 border border-slate-200 shadow-sm hover:bg-blue-50 transition-colors snap-start">🕉️ พราหมณ์</button>
-                <button onclick="toggleFilter('religion', 'chinese')" id="filter-chinese" class="filter-chip flex-shrink-0 px-5 py-2 rounded-full text-xs font-medium bg-white text-slate-600 border border-slate-200 shadow-sm hover:bg-blue-50 transition-colors snap-start">🏮 จีน</button>
+                <button onclick="toggleFilter('religion', 'buddhist')" id="filter-buddhist" class="filter-chip flex-shrink-0 px-5 py-2 rounded-full text-xs font-medium bg-white text-slate-600 border border-slate-200 shadow-sm hover:bg-blue-50 transition-colors snap-start" data-i18n="buddhist">☸️ พุทธ</button>
+                <button onclick="toggleFilter('religion', 'hindu')" id="filter-hindu" class="filter-chip flex-shrink-0 px-5 py-2 rounded-full text-xs font-medium bg-white text-slate-600 border border-slate-200 shadow-sm hover:bg-blue-50 transition-colors snap-start" data-i18n="hindu">🕉️ พราหมณ์</button>
+                <button onclick="toggleFilter('religion', 'chinese')" id="filter-chinese" class="filter-chip flex-shrink-0 px-5 py-2 rounded-full text-xs font-medium bg-white text-slate-600 border border-slate-200 shadow-sm hover:bg-blue-50 transition-colors snap-start" data-i18n="chinese">🏮 จีน</button>
             </div>
         </div>
     </div>
 
     <!-- GPS BUTTON -->
-    <div class="absolute bottom-32 right-6 z-map-controls">
+    <div class="absolute bottom-32 right-6 z-[1900]">
         <button onclick="initGPS(true)" class="bg-white/90 backdrop-blur-sm text-blue-600 p-3.5 rounded-full shadow-lg border border-slate-100 hover:bg-white active:scale-95 transition-all">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
         </button>
@@ -173,14 +168,13 @@
         <div id="bottomNavInner" class="pointer-events-auto bg-white/95 backdrop-blur-xl flex justify-between items-center relative transition-all duration-300 mx-6 mb-6 rounded-[2rem] border border-slate-100 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.15)] px-6 py-3">
             <button id="nav-home" onclick="goHome()" class="flex flex-col items-center gap-1 w-16 text-blue-600 transition-colors">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-                <span class="text-[10px] font-bold text-orange-500">แผนที่</span>
+                <span class="text-[10px] font-bold text-orange-500" data-i18n="nav_map">แผนที่</span>
             </button>
             <button id="nav-chants" onclick="openChants()" class="flex flex-col items-center gap-1 w-16 text-slate-400 hover:text-blue-600 transition-colors">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
-                <span class="text-[10px] font-medium">บทสวด</span>
+                <span class="text-[10px] font-medium" data-i18n="nav_chant">บทสวด</span>
             </button>
             <div class="absolute left-1/2 -translate-x-1/2 -top-6">
-                <!-- Center Add Button -->
                 <button onclick="openForm(null, true)" class="w-14 h-14 bg-gradient-to-tr from-blue-600 to-orange-500 rounded-full flex items-center justify-center text-white shadow-xl shadow-blue-500/30 hover:scale-105 active:scale-95 transition-all border-4 border-white">
                     <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                 </button>
@@ -188,11 +182,11 @@
             <div class="w-14"></div>
             <button id="nav-profile" onclick="openProfile()" class="flex flex-col items-center gap-1 w-16 text-slate-400 hover:text-blue-600 transition-colors">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
-                <span class="text-[10px] font-medium">รายการ</span>
+                <span class="text-[10px] font-medium" data-i18n="nav_list">รายการ</span>
             </button>
             <button id="nav-menu" onclick="toggleSidebar()" class="flex flex-col items-center gap-1 w-16 text-slate-400 hover:text-blue-600 transition-colors">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
-                <span class="text-[10px] font-medium">เมนู</span>
+                <span class="text-[10px] font-medium" data-i18n="nav_menu">เมนู</span>
             </button>
         </div>
     </div>
@@ -209,44 +203,38 @@
         </div>
         <nav class="flex-1 p-4 space-y-2">
             <button onclick="goHome()" class="w-full text-left px-4 py-3 rounded-xl hover:bg-slate-50 text-slate-700 font-medium flex items-center gap-3">
-                <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg> หน้าหลัก
+                <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg> <span data-i18n="menu_home">หน้าหลัก</span>
             </button>
             <button onclick="openProfile()" class="w-full text-left px-4 py-3 rounded-xl hover:bg-slate-50 text-slate-700 font-medium flex items-center gap-3">
-                <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg> บัญชีของฉัน
+                <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg> <span data-i18n="menu_acc">บัญชีของฉัน</span>
             </button>
             <div class="border-t border-slate-100 my-2"></div>
             <button onclick="openChants()" class="w-full text-left px-4 py-3 rounded-xl hover:bg-slate-50 text-slate-800 font-medium flex items-center gap-3">
-                <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg> ข้อมูลสิ่งศักดิ์สิทธิ์
+                <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg> <span data-i18n="menu_chant">ข้อมูลสิ่งศักดิ์สิทธิ์</span>
             </button>
         </nav>
         <div class="p-4 border-t border-slate-100" id="sidebarAuthArea"></div>
     </div>
 
-    <!-- MAIN VIEWS -->
+    <!-- BASE VIEWS -->
     
     <!-- PROFILE -->
     <div id="profileView" class="fixed inset-0 bg-white flex-col fade-in z-view hidden">
         <div class="bg-white p-4 pt-safe shadow-sm border-b border-slate-100 flex items-center justify-between shrink-0">
             <div class="flex items-center gap-3">
                 <button onclick="goHome()" class="text-slate-500 hover:text-blue-600 p-1"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg></button>
-                <h2 class="text-lg font-bold text-slate-800">บัญชีของฉัน</h2>
-            </div>
-            <div class="flex gap-2 items-center">
-                <button id="editToggleBtn" onclick="toggleEditMode()" class="p-2 text-slate-400 hover:text-blue-600 transition-colors">
-                    <svg id="iconPencil" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                    <svg id="iconCheck" class="w-6 h-6 hidden text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                </button>
+                <h2 class="text-lg font-bold text-slate-800" data-i18n="acc_title">บัญชีของฉัน</h2>
             </div>
         </div>
         <div class="flex-1 overflow-y-auto p-4 pb-32">
             <div class="mb-6">
-                <h3 class="text-xs font-bold text-blue-600 uppercase mb-3 flex items-center gap-2 tracking-wide">สิ่งศักดิ์สิทธิ์ที่นับถือ</h3>
+                <h3 class="text-xs font-bold text-blue-600 uppercase mb-3 flex items-center gap-2 tracking-wide" data-i18n="fav_title">สิ่งศักดิ์สิทธิ์ที่นับถือ</h3>
                 <div id="favoriteList" class="space-y-3"></div>
             </div>
             <div class="border-t border-slate-100 my-6"></div>
             <div>
                 <div class="flex justify-between items-center mb-3">
-                    <h3 class="text-xs font-bold text-orange-500 uppercase flex items-center gap-2 tracking-wide">รายการบนบาน</h3>
+                    <h3 class="text-xs font-bold text-orange-500 uppercase flex items-center gap-2 tracking-wide" data-i18n="vow_title">รายการบนบาน</h3>
                     <span id="totalItems" class="bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-1 rounded-full">0</span>
                 </div>
                 <div id="prayerList" class="space-y-3"></div>
@@ -259,7 +247,7 @@
         <div class="bg-white p-4 pt-safe shadow-sm border-b border-slate-100 flex items-center justify-between shrink-0">
             <div class="flex items-center gap-3">
                 <button onclick="goHome()" class="text-slate-500 hover:text-blue-600 p-1"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg></button>
-                <h2 class="text-lg font-bold text-slate-800">ข้อมูลสิ่งศักดิ์สิทธิ์</h2>
+                <h2 class="text-lg font-bold text-slate-800" data-i18n="chant_title">ข้อมูลสิ่งศักดิ์สิทธิ์</h2>
             </div>
         </div>
         <div class="flex-1 overflow-y-auto p-4 space-y-4 pb-32" id="chantsContainer"></div>
@@ -270,30 +258,32 @@
         <div class="bg-white p-4 pt-safe shadow-sm border-b border-slate-100 flex items-center justify-between shrink-0">
             <div class="flex items-center gap-3">
                 <button onclick="goHome()" class="text-slate-500 hover:text-blue-600 p-1"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
-                <h2 class="text-lg font-bold text-slate-800">บันทึกข้อมูล</h2>
+                <h2 class="text-lg font-bold text-slate-800" data-i18n="form_title">บันทึกข้อมูล</h2>
             </div>
         </div>
         <div class="flex-1 overflow-y-auto p-6 pb-32">
             <form id="prayerForm" class="space-y-6" onsubmit="savePrayer(event)">
                 <div class="bg-blue-50 p-5 rounded-3xl text-center border border-blue-100">
-                    <label class="text-xs text-blue-600 font-bold uppercase tracking-wide block mb-3">สถานที่ / สิ่งศักดิ์สิทธิ์</label>
+                    <label class="text-xs text-blue-600 font-bold uppercase tracking-wide block mb-3" data-i18n="form_plc">สถานที่ / สิ่งศักดิ์สิทธิ์</label>
                     <input type="text" id="placeInput" required placeholder="ระบุชื่อสถานที่..." class="w-full text-center bg-white border border-blue-200 rounded-2xl p-4 text-slate-900 font-bold text-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
                 <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 space-y-5">
                     <div>
-                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">หมวดหมู่</label>
-                        <select id="type" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"><option value="work">💼 การงาน / ความสำเร็จ</option><option value="finance">💰 โชคลาภ / การเงิน</option><option value="love">❤️ ความรัก / คู่ครอง</option><option value="health">💪 สุขภาพ / รักษาโรค</option><option value="general">✨ ทั่วไป / คุ้มครอง</option></select>
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2" data-i18n="form_cat">หมวดหมู่</label>
+                        <select id="type" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium">
+                            <option value="work">💼 การงาน / ความสำเร็จ</option><option value="finance">💰 โชคลาภ / การเงิน</option><option value="love">❤️ ความรัก / คู่ครอง</option><option value="health">💪 สุขภาพ / รักษาโรค</option><option value="general">✨ ทั่วไป / คุ้มครอง</option>
+                        </select>
                     </div>
                     <div class="grid grid-cols-2 gap-4">
-                        <div class="col-span-2"><label class="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">เรื่องที่ขอพร</label><input type="text" id="title" required placeholder="เช่น ขอให้ยอดขายปัง..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"></div>
-                        <div class="col-span-2"><label class="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">วันที่ครบกำหนด</label><input type="date" id="deadline" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"></div>
+                        <div class="col-span-2"><label class="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2" data-i18n="form_subj">เรื่องที่ขอพร</label><input type="text" id="title" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"></div>
+                        <div class="col-span-2"><label class="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2" data-i18n="form_due">วันที่ครบกำหนด</label><input type="date" id="deadline" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"></div>
                     </div>
                     <div class="grid grid-cols-3 gap-4 border-t border-slate-100 pt-5">
-                        <div class="col-span-2"><label class="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">สิ่งที่บนบาน</label><input type="text" id="offeringItem" placeholder="เช่น ไข่ต้ม" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"></div>
-                        <div class="col-span-1"><label class="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">จำนวน</label><input type="text" id="offeringAmount" placeholder="99" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"></div>
+                        <div class="col-span-2"><label class="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2" data-i18n="form_item">สิ่งที่บนบาน</label><input type="text" id="offeringItem" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"></div>
+                        <div class="col-span-1"><label class="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2" data-i18n="form_amt">จำนวน</label><input type="text" id="offeringAmount" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"></div>
                     </div>
                 </div>
-                <button type="submit" id="saveButton" class="w-full bg-blue-600 text-white font-bold text-lg py-4 rounded-2xl shadow-xl shadow-blue-600/20 hover:scale-[1.02] active:scale-95 transition-all">บันทึกข้อมูล</button>
+                <button type="submit" id="saveButton" class="w-full bg-blue-600 text-white font-bold text-lg py-4 rounded-2xl shadow-xl shadow-blue-600/20 hover:scale-[1.02] active:scale-95 transition-all" data-i18n="form_save">บันทึกข้อมูล</button>
             </form>
         </div>
     </div>
@@ -301,30 +291,31 @@
     <!-- PLACE INFO & REVIEWS -->
     <div id="placeView" class="fixed inset-0 bg-white flex-col fade-in z-view hidden">
         <div class="bg-white p-4 pt-safe shadow-sm border-b border-slate-100 flex items-center justify-between shrink-0">
-            <button onclick="goHome()" class="text-slate-500 hover:text-blue-600 p-1"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
-            <h2 class="text-lg font-bold text-slate-800">ข้อมูลสถานที่</h2>
+            <button onclick="closeBaseView('placeView')" class="text-slate-500 hover:text-blue-600 p-1"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
+            <h2 class="text-lg font-bold text-slate-800" data-i18n="place_info">ข้อมูลสถานที่</h2>
             <div class="w-6"></div>
         </div>
-        <div class="flex-1 overflow-y-auto p-0 pb-32">
+        <div class="flex-1 overflow-y-auto p-0 relative">
             <div class="h-48 bg-blue-600 flex items-center justify-center relative overflow-hidden"><h1 class="text-6xl filter drop-shadow-lg">🏛️</h1></div>
-            <div class="p-6 -mt-10 relative">
+            <div class="p-6 -mt-10 pb-36"> <!-- ให้เนื้อหาข้างล่างขยายออกเพื่อหลบ Footer และปุ่ม -->
                 <div class="bg-white rounded-3xl p-6 shadow-xl shadow-slate-200/50 mb-6 border border-slate-100 text-center">
                     <h2 id="viewPlaceName" class="text-2xl font-bold text-slate-900 mb-2">...</h2>
-                    <div class="inline-block bg-orange-50 px-4 py-2 rounded-xl text-sm font-bold text-orange-600 mt-2 border border-orange-100">เด่นเรื่อง: <span id="viewPlaceFamous">...</span></div>
+                    <div class="inline-block bg-orange-50 px-4 py-2 rounded-xl text-sm font-bold text-orange-600 mt-2 border border-orange-100"><span data-i18n="famous">เด่นเรื่อง:</span> <span id="viewPlaceFamous">...</span></div>
                 </div>
                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wide">รีวิวจากผู้ศรัทธา</h3>
-                    <button onclick="openReviewForm()" class="text-xs bg-blue-600 text-white px-4 py-2 rounded-full font-bold hover:scale-105 active:scale-95 transition-all">เขียนรีวิว</button>
+                    <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wide" data-i18n="review_title">รีวิวจากผู้ศรัทธา</h3>
+                    <button onclick="openReviewForm()" class="text-xs bg-blue-600 text-white px-4 py-2 rounded-full font-bold hover:scale-105 active:scale-95 transition-all" data-i18n="write_review">เขียนรีวิว</button>
                 </div>
                 <div id="viewPlaceReviewsList" class="space-y-4"></div>
             </div>
         </div>
-        <div class="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-white via-white/90 to-transparent pointer-events-none pb-safe">
-            <button id="viewPlaceRecordBtn" class="pointer-events-auto w-full bg-blue-600 text-white py-4 rounded-2xl font-bold shadow-xl shadow-blue-600/20 hover:scale-[1.02] active:scale-95 transition-all text-lg">บันทึกการบนบาน</button>
+        <!-- 🔴 แก้ไขการโดนบัง: ดันปุ่มนี้ลอยเหนือ Bottom Nav (z-[9500]) โดยใช้ absolute bottom-24 -->
+        <div class="absolute bottom-24 left-0 w-full p-6 bg-gradient-to-t from-white via-white/90 to-transparent pointer-events-none pb-safe z-10">
+            <button id="viewPlaceRecordBtn" class="pointer-events-auto w-full bg-blue-600 text-white py-4 rounded-2xl font-bold shadow-xl shadow-blue-600/20 hover:scale-[1.02] active:scale-95 transition-all text-lg" data-i18n="record_vow">บันทึกการบนบาน</button>
         </div>
     </div>
 
-    <!-- SUB VIEWS (Overlaying Base Views) -->
+    <!-- SUB VIEWS -->
     
     <!-- DEITY DETAIL -->
     <div id="deityView" class="fixed inset-0 bg-white flex-col fade-in z-subview hidden">
@@ -347,11 +338,11 @@
                     <p id="deityDesc" class="text-sm text-slate-500 font-medium">...</p>
                 </div>
                 <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 mb-4">
-                    <h3 class="text-xs font-bold text-orange-500 uppercase tracking-wide mb-3">ของถวาย</h3>
+                    <h3 class="text-xs font-bold text-orange-500 uppercase tracking-wide mb-3" data-i18n="offer_title">ของถวาย</h3>
                     <p id="deityOffer" class="text-sm text-slate-800 font-medium leading-relaxed">...</p>
                 </div>
                 <div class="bg-blue-50 p-6 rounded-3xl shadow-sm border border-blue-100 relative overflow-hidden">
-                    <h3 class="text-xs font-bold text-blue-600 uppercase tracking-wide mb-3">บทสวดบูชา</h3>
+                    <h3 class="text-xs font-bold text-blue-600 uppercase tracking-wide mb-3" data-i18n="chant_sub">บทสวดบูชา</h3>
                     <p id="deityChant" class="text-lg text-slate-800 font-serif italic text-center py-4 leading-relaxed tracking-wide whitespace-normal break-words">...</p>
                 </div>
             </div>
@@ -363,7 +354,7 @@
         <div class="bg-white p-4 pt-safe shadow-sm border-b border-slate-100 flex items-center justify-between shrink-0">
             <div class="flex items-center gap-3">
                 <button onclick="closeSubView('detailView')" class="text-slate-500 hover:text-blue-600 p-1"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
-                <h2 class="text-lg font-bold text-slate-800">รายละเอียดการบนบาน</h2>
+                <h2 class="text-lg font-bold text-slate-800" data-i18n="vow_detail">รายละเอียดการบนบาน</h2>
             </div>
             <div class="flex gap-2">
                 <button onclick="deleteCurrentItem()" class="p-2 text-slate-400 hover:text-red-500 transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
@@ -376,16 +367,16 @@
                     <p id="detailPlace" class="text-sm text-blue-600 font-bold underline cursor-pointer hover:text-blue-800 mt-1">...</p>
                 </div>
                 <div class="border-t border-slate-100 pt-4 space-y-3">
-                    <div class="flex justify-between"><span class="text-slate-500 text-sm">หมวดหมู่</span><span id="detailType" class="text-slate-800 font-medium text-sm">...</span></div>
-                    <div class="flex justify-between"><span class="text-slate-500 text-sm">ครบกำหนด</span><span id="detailDeadline" class="text-slate-800 font-medium text-sm">...</span></div>
-                    <div class="bg-slate-50 p-4 rounded-2xl mt-2 border border-slate-100"><p class="text-xs text-slate-400 font-bold uppercase tracking-wide mb-1">สิ่งที่บนบาน</p><p id="detailOffering" class="text-sm text-slate-800 font-medium">...</p></div>
+                    <div class="flex justify-between"><span class="text-slate-500 text-sm" data-i18n="cat">หมวดหมู่</span><span id="detailType" class="text-slate-800 font-medium text-sm">...</span></div>
+                    <div class="flex justify-between"><span class="text-slate-500 text-sm" data-i18n="due">ครบกำหนด</span><span id="detailDeadline" class="text-slate-800 font-medium text-sm">...</span></div>
+                    <div class="bg-slate-50 p-4 rounded-2xl mt-2 border border-slate-100"><p class="text-xs text-slate-400 font-bold uppercase tracking-wide mb-1" data-i18n="vow_item">สิ่งที่บนบาน</p><p id="detailOffering" class="text-sm text-slate-800 font-medium">...</p></div>
                 </div>
                 <div class="pt-6 border-t border-slate-100">
-                    <div class="flex justify-between items-center mb-4"><h4 class="text-xs font-bold text-slate-400 uppercase tracking-wide">อัปเดตสถานะ</h4></div>
+                    <div class="flex justify-between items-center mb-4"><h4 class="text-xs font-bold text-slate-400 uppercase tracking-wide" data-i18n="update_stat">อัปเดตสถานะ</h4></div>
                     <div id="statusActions" class="space-y-3"></div>
                     
                     <div id="vowCompletionArea" class="hidden mt-4 bg-blue-50 p-5 rounded-3xl shadow-sm border border-blue-100">
-                        <h4 class="text-sm font-bold text-blue-700 mb-4 text-center">🎉 บันทึกความสำเร็จ</h4>
+                        <h4 class="text-sm font-bold text-blue-700 mb-4 text-center" data-i18n="success_record">🎉 บันทึกความสำเร็จ</h4>
                         <div class="flex justify-center gap-2 mb-4">
                             <svg onclick="setTempRating(1)" class="star w-8 h-8 inactive hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
                             <svg onclick="setTempRating(2)" class="star w-8 h-8 inactive hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
@@ -393,17 +384,16 @@
                             <svg onclick="setTempRating(4)" class="star w-8 h-8 inactive hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
                             <svg onclick="setTempRating(5)" class="star w-8 h-8 inactive hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
                         </div>
-                        <textarea id="vowReviewText" rows="3" placeholder="ความประทับใจ (ไม่บังคับ)..." class="w-full bg-white border border-blue-200 rounded-xl p-3 text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"></textarea>
-                        <button onclick="submitVowCompletion()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl shadow hover:bg-blue-700 transition-colors">ยืนยันการแก้บน</button>
+                        <button onclick="submitVowCompletion()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl shadow hover:bg-blue-700 transition-colors" data-i18n="success_confirm">ยืนยันการแก้บน</button>
                     </div>
                     
                     <div id="notificationArea" class="hidden mt-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
                         <div class="flex justify-between items-center mb-2">
-                            <span class="text-sm font-bold text-slate-700">แจ้งเตือนแก้บน</span>
+                            <span class="text-sm font-bold text-slate-700" data-i18n="notify_title">แจ้งเตือนแก้บน</span>
                             <label class="switch"><input type="checkbox" id="notifToggle" onchange="toggleNotification()"><span class="slider"></span></label>
                         </div>
                         <div id="customDateSection" class="opacity-100 transition-opacity mt-3 pt-3 border-t border-slate-200">
-                            <label class="block text-xs text-slate-500 font-bold uppercase tracking-wide mb-2">กำหนดวันแจ้งเตือน</label>
+                            <label class="block text-xs text-slate-500 font-bold uppercase tracking-wide mb-2" data-i18n="notify_date">กำหนดวันแจ้งเตือน</label>
                             <input type="date" id="customNotifDate" class="w-full text-sm p-3 rounded-xl border border-slate-200 text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500" onchange="saveNotificationDate()">
                         </div>
                     </div>
@@ -416,7 +406,7 @@
     <div id="reviewFormView" class="fixed inset-0 bg-black/60 backdrop-blur-sm items-end sm:items-center justify-center fade-in z-modal hidden">
         <div class="bg-white w-full sm:w-96 rounded-t-[2rem] sm:rounded-3xl p-8 shadow-2xl relative">
             <button onclick="closeSubView('reviewFormView')" class="absolute top-6 right-6 text-slate-400 hover:text-slate-900 transition-colors bg-slate-50 rounded-full p-1"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
-            <h3 class="text-xl font-bold text-blue-600 mb-2">เขียนรีวิวสถานที่</h3>
+            <h3 class="text-xl font-bold text-blue-600 mb-2" data-i18n="review_title">เขียนรีวิวสถานที่</h3>
             <p id="reviewPlaceNameTarget" class="text-sm text-slate-500 mb-6 font-medium">...</p>
             <div class="flex justify-center gap-2 mb-6">
                 <svg onclick="setReviewRating(1)" class="review-star w-10 h-10 inactive hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
@@ -425,8 +415,8 @@
                 <svg onclick="setReviewRating(4)" class="review-star w-10 h-10 inactive hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
                 <svg onclick="setReviewRating(5)" class="review-star w-10 h-10 inactive hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
             </div>
-            <textarea id="reviewText" rows="4" placeholder="เล่าประสบการณ์และความประทับใจ..." class="w-full bg-white border border-blue-200 rounded-xl p-3 text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 mb-6 resize-none"></textarea>
-            <button onclick="submitReview()" class="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-xl shadow-blue-600/20 hover:scale-[1.02] active:scale-95 transition-all text-lg">ส่งรีวิว</button>
+            <textarea id="reviewText" rows="4" placeholder="เล่าประสบการณ์และความประทับใจ..." data-i18n-placeholder="review_placeholder" class="w-full bg-white border border-blue-200 rounded-xl p-3 text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 mb-6 resize-none"></textarea>
+            <button onclick="submitReview()" class="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-xl shadow-blue-600/20 hover:scale-[1.02] active:scale-95 transition-all text-lg" data-i18n="review_submit">ส่งรีวิว</button>
         </div>
     </div>
 
@@ -441,70 +431,135 @@
         let prayers = []; 
         let currentDetailId = null;
         let tempRating = 0; 
-        let isEditMode = false;
         let currentFilterState = { topics: new Set(), religions: new Set() };
         let tempReviewRating = 0;
         let currentPlaceName = "";
+        let globalLang = localStorage.getItem('saddha_lang') || 'th'; // ระบบภาษา
         
+        // --- TRANSLATION DICTIONARY ---
+        const i18nData = {
+            th: {
+                auth_desc: "เข้าสู่ระบบเพื่อบันทึกข้อมูลของคุณ", login: "เข้าสู่ระบบ", register: "สมัครสมาชิก",
+                auth_no_acc: "ยังไม่มีบัญชี?", auth_have_acc: "มีบัญชีอยู่แล้ว?",
+                search_area: "ค้นหาบริเวณนี้", welcome: "ยินดีต้อนรับ", guest: "ผู้ใช้งานทั่วไป",
+                search_plc: "ค้นหาสถานที่หรือศาลเจ้า...",
+                all: "ทั้งหมด", love: "❤️ ความรัก", wealth: "💰 โชคลาภ", work: "💼 การงาน", health: "💪 สุขภาพ",
+                buddhist: "☸️ พุทธ", hindu: "🕉️ พราหมณ์", chinese: "🏮 จีน",
+                nav_map: "แผนที่", nav_chant: "บทสวด", nav_list: "รายการ", nav_menu: "เมนู",
+                menu_home: "หน้าหลัก", menu_acc: "บัญชีของฉัน", menu_chant: "ข้อมูลสิ่งศักดิ์สิทธิ์", menu_logout: "ออกจากระบบ",
+                acc_title: "บัญชีของฉัน", fav_title: "สิ่งศักดิ์สิทธิ์ที่นับถือ", vow_title: "รายการบนบาน",
+                chant_title: "ข้อมูลสิ่งศักดิ์สิทธิ์",
+                offer_title: "ของถวาย", chant_sub: "บทสวดบูชา",
+                vow_detail: "รายละเอียดการบนบาน", cat: "หมวดหมู่", due: "ครบกำหนด", vow_item: "สิ่งที่บนบาน",
+                update_stat: "อัปเดตสถานะ", btn_success: "✅ สำเร็จ", btn_fail: "❌ ไม่สำเร็จ", status_waiting: "🙏 รอแก้บน", status_ended: "จบรายการแล้ว", status_pending: "⏳ รอผล",
+                place_info: "ข้อมูลสถานที่", famous: "เด่นเรื่อง:", review_title: "รีวิวจากผู้ศรัทธา", write_review: "เขียนรีวิว",
+                record_vow: "บันทึกการบนบาน",
+                form_title: "บันทึกข้อมูล", form_plc: "สถานที่ / สิ่งศักดิ์สิทธิ์", form_cat: "หมวดหมู่", form_subj: "เรื่องที่ขอพร",
+                form_due: "วันที่ครบกำหนด", form_item: "สิ่งที่บนบาน", form_amt: "จำนวน", form_save: "บันทึกข้อมูล",
+                review_title: "เขียนรีวิวสถานที่", review_placeholder: "เล่าประสบการณ์และความประทับใจ...", review_submit: "ส่งรีวิว",
+                success_record: "🎉 บันทึกความสำเร็จ", success_confirm: "ยืนยันการแก้บน", notify_title: "แจ้งเตือนแก้บน", notify_date: "กำหนดวันแจ้งเตือน",
+                alert_login_req: "กรุณาเข้าสู่ระบบก่อนครับ", alert_pwd_match: "รหัสผ่านไม่ตรงกัน กรุณาตรวจสอบอีกครั้ง", alert_err_db: "เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล กรุณาลองใหม่อีกครั้ง",
+                alert_no_place: "ไม่พบสถานที่ศักดิ์สิทธิ์ในบริเวณนี้", alert_server_busy: "เซิร์ฟเวอร์หน่วง กรุณาลองใหม่", alert_review_req: "กรุณาเขียนรีวิวสั้นๆ ก่อนส่งครับ", alert_thx_review: "ขอบคุณสำหรับรีวิวครับ 🙏", alert_save_ok: "✅ บันทึกข้อมูลสำเร็จ!"
+            },
+            en: {
+                auth_desc: "Login to save your records", login: "Login", register: "Register",
+                auth_no_acc: "No account?", auth_have_acc: "Already have an account?",
+                search_area: "Search this area", welcome: "Welcome", guest: "Guest User",
+                search_plc: "Search places or shrines...",
+                all: "All", love: "❤️ Love", wealth: "💰 Wealth", work: "💼 Work", health: "💪 Health",
+                buddhist: "☸️ Buddhist", hindu: "🕉️ Hindu", chinese: "🏮 Chinese",
+                nav_map: "Map", nav_chant: "Chants", nav_list: "List", nav_menu: "Menu",
+                menu_home: "Home", menu_acc: "My Account", menu_chant: "Sacred Places Info", menu_logout: "Logout",
+                acc_title: "My Account", fav_title: "Favorite Sacred Places", vow_title: "My Vows",
+                chant_title: "Sacred Places Info",
+                offer_title: "Offerings", chant_sub: "Chant",
+                vow_detail: "Vow Details", cat: "Category", due: "Due Date", vow_item: "Vowed Item",
+                update_stat: "Update Status", btn_success: "✅ Success", btn_fail: "❌ Failed", status_waiting: "🙏 Waiting to Fulfill", status_ended: "Completed", status_pending: "⏳ Pending",
+                place_info: "Place Information", famous: "Famous for:", review_title: "Believers' Reviews", write_review: "Write Review",
+                record_vow: "Record a Vow",
+                form_title: "Record Data", form_plc: "Place / Sacred Entity", form_cat: "Category", form_subj: "Prayer Subject",
+                form_due: "Due Date", form_item: "Offering Item", form_amt: "Amount", form_save: "Save Data",
+                review_title: "Write a Review", review_placeholder: "Share your experience...", review_submit: "Submit Review",
+                success_record: "🎉 Record Success", success_confirm: "Confirm Fulfillment", notify_title: "Fulfillment Reminder", notify_date: "Set Reminder Date",
+                alert_login_req: "Please login first", alert_pwd_match: "Passwords do not match", alert_err_db: "Database connection error, please try again.",
+                alert_no_place: "No sacred places found in this area", alert_server_busy: "Server is busy, please try again.", alert_review_req: "Please write a short review before submitting.", alert_thx_review: "Thank you for the review 🙏", alert_save_ok: "✅ Saved successfully!"
+            }
+        };
+
+        // DEITY DATA (Bilingual)
         const deitiesData = [
-            { id: 1, name: "พระพิฆเนศ", desc: "เทพแห่งความสำเร็จ ขจัดอุปสรรค", text: "โอม ศรี คเณศายะ นะมะฮา", offer: "นมสด, น้ำแดง, ขนมลาดู, ดอกดาวเรือง", img: "https://upload.wikimedia.org/wikipedia/commons/c/c2/Ganesha_Basohli_miniature_circa_1730_Dubost_p73.jpg" },
-            { id: 2, name: "พระแม่ลักษมี", desc: "มหาเทวีแห่งความร่ำรวย ความรัก", text: "โอม ชยะ ศรี ลักษมี มาตา", offer: "ดอกบัวสีชมพู, นมสด, ขนมหวาน", img: "https://upload.wikimedia.org/wikipedia/commons/e/e6/Raja_Ravi_Varma_-_Goddess_Lakshmi.jpg" },
-            { id: 3, name: "พระตรีมูรติ", desc: "รวมพลังเทพ 3 องค์ ขอพรความรัก", text: "โอม ทัตตาเตรยา ยะนะมะฮา", offer: "ดอกกุหลาบแดง 9 ดอก, ธูปแดง 9 ดอก", img: "https://upload.wikimedia.org/wikipedia/commons/1/1a/Elephanta_Caves_Trimurti.jpg" },
-            { id: 4, name: "พระแม่กวนอิม", desc: "เทพแห่งความเมตตา ปัดเป่าทุกข์ภัย", text: "นำโม กวนสือยิน ผู่สัก", offer: "น้ำเปล่า, ดอกบัว, ผลไม้ (ห้ามเนื้อสัตว์)", img: "https://upload.wikimedia.org/wikipedia/commons/f/ff/Kuan_Yin_Statue.jpg" },
-            { id: 5, name: "พระแม่ธรณี", desc: "แม่แห่งแผ่นดิน ความร่มเย็น", text: "ตัสสะ เกสะโต ปิโต มะตัง วาเรถะ นิมิปิถะ สะมุหะติ นะโมพุทธายะ", offer: "น้ำเปล่า, ดอกไม้, หมากพลู", img: "https://upload.wikimedia.org/wikipedia/commons/6/6f/Phra_Mae_Thorani.JPG" },
-            { id: 6, name: "พระสังกัจจายน์", desc: "อุดมสมบูรณ์ โชคลาภ", text: "กัจจายนะ จะ มหาเถโร พุทโธ พุทธานัง พุทธะตัง พุทธัญจะ", offer: "ดอกบัว, น้ำชา, ขนมเปี๊ยะ", img: "https://upload.wikimedia.org/wikipedia/commons/a/a2/Phra_Sangkajai.jpg" },
-            { id: 7, name: "ท้าวเวสสุวรรณ", desc: "ขจัดภูตผี ป้องกันภัย โชคลาภ", text: "อิติปิโส ภะคะวา ยมมะราชาโน ท้าวเวสสุวรรณโณ มะระณัง สุขัง", offer: "ดอกกุหลาบแดง 9 ดอก, น้ำแดง", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/17/Yak_Wat_Phra_Kaew.jpg/450px-Yak_Wat_Phra_Kaew.jpg" },
-            { id: 8, name: "เทพเจ้าไฉ่ซิงเอี๊ย", desc: "เทพเจ้าแห่งโชคลาภ การเงิน", text: "โอม ชัมภาลา จาเลนไน เย โซฮา", offer: "ส้มมงคล 5 ผล, น้ำชา, ขนมจันอับ", img: "https://upload.wikimedia.org/wikipedia/commons/0/03/Caishen.jpg" },
-            { id: 9, name: "พระราหู", desc: "แก้ปีชง เสริมดวง", text: "คะ พุท ปัน ทู ธัม วะ คะ", offer: "ของดำ 8 หรือ 12 อย่าง", img: "https://upload.wikimedia.org/wikipedia/commons/8/87/Rahu_Wat_Sothon.jpg" },
-            { id: 10, name: "ไอ้ไข่ วัดเจดีย์", desc: "โชคลาภ การเสี่ยงโชค", text: "อิติ อิติ กุมารไข่เจดีย์ จะ มหาเถโร ลาภะ ลาภา ภะวันตุเม", offer: "น้ำแดง, ชุดทหาร, ประทัด, ไก่ชน", img: "https://upload.wikimedia.org/wikipedia/commons/9/93/Rooster04_adjust.jpg" },
-            { id: 11, name: "เซียนแปะโรงสี", desc: "โชคลาภ การค้าขาย", text: "เทียน กัว สื่อ ฮก โหงว ลี่", offer: "กาแฟดำ, หมากพลู", img: "https://upload.wikimedia.org/wikipedia/commons/8/80/Chinese_Shrine_Phuket.jpg" },
-            { id: 12, name: "พระศิวะ", desc: "ผู้ทำลายสิ่งชั่วร้าย ขอโชคลาภ", text: "โอม นะมัส ศิวายะ", offer: "นมสด, น้ำสะอาด, ดอกมะลิ", img: "https://upload.wikimedia.org/wikipedia/commons/d/d3/Shiva_Bangalore.jpg" },
-            { id: 13, name: "พระนารายณ์", desc: "ความสุขเย็นเป็นสุข คุ้มครอง", text: "โอม นารายะณายะ นะมะ", offer: "น้ำเปล่า, นมสด, ดอกบัว", img: "https://upload.wikimedia.org/wikipedia/commons/0/0c/Vishnu.jpg" },
-            { id: 14, name: "พระพรหม", desc: "ขอพรได้รอบด้าน (4 ทิศ)", text: "โอม พรหมมายะ นะมะ", offer: "ดอกมะลิ, ช้างไม้, ธูป 9 ดอก", img: "https://upload.wikimedia.org/wikipedia/commons/f/f6/Erawan_Shrine.jpg" },
-            { id: 15, name: "พระแม่สุรัสวดี", desc: "ปัญญา ความรู้ ศิลปะ", text: "โอม ไอ มะ สุรัสวตี นะมะฮา", offer: "ดอกไม้สีขาว, ขนมสีขาว", img: "https://upload.wikimedia.org/wikipedia/commons/b/b2/Raja_Ravi_Varma_-_Saraswati.jpg" },
-            { id: 16, name: "พระแม่อุมาเทวี", desc: "ความรัก การมีบุตร อำนาจ", text: "โอม ศรี มหา อุมาเทวี นะมะฮา", offer: "พวงมาลัยดาวเรือง, มะนาว, ขนม", img: "https://upload.wikimedia.org/wikipedia/commons/e/e9/Parvati.jpg" }
+            { id: 1, name: "พระพิฆเนศ", name_en: "Ganesha", desc: "เทพแห่งความสำเร็จ ขจัดอุปสรรค", desc_en: "God of Success, Remover of Obstacles", text: "โอม ศรี คเณศายะ นะมะฮา", text_en: "Om Shri Ganeshaya Namaha", offer: "นมสด, น้ำแดง, ขนมลาดู, ดอกดาวเรือง", offer_en: "Milk, Red Syrup, Ladoo, Marigolds", img: "https://upload.wikimedia.org/wikipedia/commons/c/c2/Ganesha_Basohli_miniature_circa_1730_Dubost_p73.jpg" },
+            { id: 2, name: "พระแม่ลักษมี", name_en: "Lakshmi", desc: "มหาเทวีแห่งความร่ำรวย ความรัก", desc_en: "Goddess of Wealth & Love", text: "โอม ชยะ ศรี ลักษมี มาตา", text_en: "Om Shreem Mahalakshmiyei Namaha", offer: "ดอกบัวสีชมพู, นมสด, ขนมหวาน", offer_en: "Pink Lotus, Milk, Sweets", img: "https://upload.wikimedia.org/wikipedia/commons/e/e6/Raja_Ravi_Varma_-_Goddess_Lakshmi.jpg" },
+            { id: 3, name: "พระตรีมูรติ", name_en: "Trimurti", desc: "รวมพลังเทพ 3 องค์ ขอพรความรัก", desc_en: "Trinity of Supreme Divinity (Love)", text: "โอม ทัตตาเตรยา ยะนะมะฮา", text_en: "Om Dattatreyaya Namaha", offer: "ดอกกุหลาบแดง 9 ดอก, ธูปแดง 9 ดอก", offer_en: "9 Red Roses, 9 Red Incense", img: "https://upload.wikimedia.org/wikipedia/commons/1/1a/Elephanta_Caves_Trimurti.jpg" },
+            { id: 4, name: "พระแม่กวนอิม", name_en: "Guanyin", desc: "เทพแห่งความเมตตา ปัดเป่าทุกข์ภัย", desc_en: "Goddess of Mercy", text: "นำโม กวนสือยิน ผู่สัก", text_en: "Namo Guanshiyin Pusa", offer: "น้ำเปล่า, ดอกบัว, ผลไม้ (ห้ามเนื้อสัตว์)", offer_en: "Water, Lotus, Fruits (No Meat)", img: "https://upload.wikimedia.org/wikipedia/commons/f/ff/Kuan_Yin_Statue.jpg" },
+            { id: 5, name: "พระแม่ธรณี", name_en: "Phra Mae Thorani", desc: "แม่แห่งแผ่นดิน ความร่มเย็น", desc_en: "Earth Goddess", text: "ตัสสะ เกสะโต ปิโต มะตัง วาเรถะ นิมิปิถะ สะมุหะติ นะโมพุทธายะ", text_en: "Tassa Kesato...", offer: "น้ำเปล่า, ดอกไม้, หมากพลู", offer_en: "Water, Flowers, Betel nuts", img: "https://upload.wikimedia.org/wikipedia/commons/6/6f/Phra_Mae_Thorani.JPG" },
+            { id: 6, name: "พระสังกัจจายน์", name_en: "Sangkachai", desc: "อุดมสมบูรณ์ โชคลาภ", desc_en: "Abundance & Fortune", text: "กัจจายนะ จะ มหาเถโร พุทโธ พุทธานัง พุทธะตัง พุทธัญจะ", text_en: "Kaccayana Ca Mahathero...", offer: "ดอกบัว, น้ำชา, ขนมเปี๊ยะ", offer_en: "Lotus, Tea, Chinese Pastry", img: "https://upload.wikimedia.org/wikipedia/commons/a/a2/Phra_Sangkajai.jpg" },
+            { id: 7, name: "ท้าวเวสสุวรรณ", name_en: "Thao Vessuwan", desc: "ขจัดภูตผี ป้องกันภัย โชคลาภ", desc_en: "Protector & Fortune", text: "อิติปิโส ภะคะวา ยมมะราชาโน ท้าวเวสสุวรรณโณ มะระณัง สุขัง", text_en: "Itipiso Bhagava...", offer: "ดอกกุหลาบแดง 9 ดอก, น้ำแดง", offer_en: "9 Red Roses, Red Syrup", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/17/Yak_Wat_Phra_Kaew.jpg/450px-Yak_Wat_Phra_Kaew.jpg" },
+            { id: 8, name: "เทพเจ้าไฉ่ซิงเอี๊ย", name_en: "Caishen", desc: "เทพเจ้าแห่งโชคลาภ การเงิน", desc_en: "God of Wealth", text: "โอม ชัมภาลา จาเลนไน เย โซฮา", text_en: "Om Dzambhala Jalendraye Svaha", offer: "ส้มมงคล 5 ผล, น้ำชา, ขนมจันอับ", offer_en: "5 Oranges, Tea, Sweets", img: "https://upload.wikimedia.org/wikipedia/commons/0/03/Caishen.jpg" },
+            { id: 9, name: "พระราหู", name_en: "Rahu", desc: "แก้ปีชง เสริมดวง", desc_en: "Ward off bad luck", text: "คะ พุท ปัน ทู ธัม วะ คะ", text_en: "Ka Phut Pan...", offer: "ของดำ 8 หรือ 12 อย่าง", offer_en: "8 or 12 Black Offerings", img: "https://upload.wikimedia.org/wikipedia/commons/8/87/Rahu_Wat_Sothon.jpg" },
+            { id: 10, name: "ไอ้ไข่ วัดเจดีย์", name_en: "Ai Khai", desc: "โชคลาภ การเสี่ยงโชค", desc_en: "Fortune & Luck", text: "อิติ อิติ กุมารไข่เจดีย์ จะ มหาเถโร ลาภะ ลาภา ภะวันตุเม", text_en: "Iti Iti Kuman...", offer: "น้ำแดง, ชุดทหาร, ประทัด, ไก่ชน", offer_en: "Red Syrup, Toy Soldier, Firecrackers", img: "https://upload.wikimedia.org/wikipedia/commons/9/93/Rooster04_adjust.jpg" },
+            { id: 11, name: "เซียนแปะโรงสี", name_en: "Sian Pae Rong Si", desc: "โชคลาภ การค้าขาย", desc_en: "Trade & Wealth", text: "เทียน กัว สื่อ ฮก โหงว ลี่", text_en: "Tian Gua Si Hok...", offer: "กาแฟดำ, หมากพลู", offer_en: "Black Coffee, Betel nuts", img: "https://upload.wikimedia.org/wikipedia/commons/8/80/Chinese_Shrine_Phuket.jpg" },
+            { id: 12, name: "พระศิวะ", name_en: "Shiva", desc: "ผู้ทำลายสิ่งชั่วร้าย ขอโชคลาภ", desc_en: "Destroyer of Evil", text: "โอม นะมัส ศิวายะ", text_en: "Om Namah Shivaya", offer: "นมสด, น้ำสะอาด, ดอกมะลิ", offer_en: "Milk, Water, Jasmine", img: "https://upload.wikimedia.org/wikipedia/commons/d/d3/Shiva_Bangalore.jpg" },
+            { id: 13, name: "พระนารายณ์", name_en: "Vishnu", desc: "ความสุขเย็นเป็นสุข คุ้มครอง", desc_en: "Protector & Preserver", text: "โอม นารายะณายะ นะมะ", text_en: "Om Narayanaya Namaha", offer: "น้ำเปล่า, นมสด, ดอกบัว", offer_en: "Water, Milk, Lotus", img: "https://upload.wikimedia.org/wikipedia/commons/0/0c/Vishnu.jpg" },
+            { id: 14, name: "พระพรหม", name_en: "Brahma", desc: "ขอพรได้รอบด้าน (4 ทิศ)", desc_en: "Creator (All-around Blessings)", text: "โอม พรหมมายะ นะมะ", text_en: "Om Brahmaya Namaha", offer: "ดอกมะลิ, ช้างไม้, ธูป 9 ดอก", offer_en: "Jasmine, Wooden Elephant, 9 Incense", img: "https://upload.wikimedia.org/wikipedia/commons/f/f6/Erawan_Shrine.jpg" },
+            { id: 15, name: "พระแม่สุรัสวดี", name_en: "Saraswati", desc: "ปัญญา ความรู้ ศิลปะ", desc_en: "Goddess of Knowledge & Arts", text: "โอม ไอ มะ สุรัสวตี นะมะฮา", text_en: "Om Aim Saraswatyai Namaha", offer: "ดอกไม้สีขาว, ขนมสีขาว", offer_en: "White Flowers, White Sweets", img: "https://upload.wikimedia.org/wikipedia/commons/b/b2/Raja_Ravi_Varma_-_Saraswati.jpg" },
+            { id: 16, name: "พระแม่อุมาเทวี", name_en: "Uma/Parvati", desc: "ความรัก การมีบุตร อำนาจ", desc_en: "Goddess of Power & Love", text: "โอม ศรี มหา อุมาเทวี นะมะฮา", text_en: "Om Shri Maha Umadevi Namaha", offer: "พวงมาลัยดาวเรือง, มะนาว, ขนม", offer_en: "Marigolds, Limes, Sweets", img: "https://upload.wikimedia.org/wikipedia/commons/e/e9/Parvati.jpg" }
         ];
+        
         let favorites = JSON.parse(localStorage.getItem('saddha_favorites')) || [];
-        const categoryLabels = { 'work': 'การงาน / ความสำเร็จ', 'finance': 'โชคลาภ / การเงิน', 'love': 'ความรัก / คู่ครอง', 'health': 'สุขภาพ / รักษาโรค', 'general': 'ทั่วไป / คุ้มครอง' };
         const blueIcon = L.divIcon({ className: 'custom-div-icon', html: `<div style="background-color: white; width: 14px; height: 14px; border-radius: 50%; border: 4px solid #3b82f6; box-shadow: 0 4px 6px rgba(0,0,0,0.3);"></div>`, iconSize: [16, 16], iconAnchor: [8, 8] });
 
-        const BASE_VIEWS = ['profileView', 'chantsView', 'formView', 'placeView'];
-        const SUB_VIEWS = ['detailView', 'deityView', 'reviewFormView'];
+        // --- LANGUAGE SYSTEM ---
+        function toggleLanguage() {
+            globalLang = globalLang === 'th' ? 'en' : 'th';
+            localStorage.setItem('saddha_lang', globalLang);
+            applyLanguage();
+            // Re-render things if open
+            if (!document.getElementById('chantsView').classList.contains('hidden')) openChants();
+            if (!document.getElementById('profileView').classList.contains('hidden')) openProfile();
+            // Refresh map labels context
+            const center = map.getCenter();
+            loadTemplesNearby(center.lat, center.lng);
+        }
+
+        function applyLanguage() {
+            document.getElementById('langLabel').innerText = globalLang.toUpperCase();
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (i18nData[globalLang][key]) el.innerText = i18nData[globalLang][key];
+            });
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-i18n-placeholder');
+                if (i18nData[globalLang][key]) el.placeholder = i18nData[globalLang][key];
+            });
+            updateSidebarAuth();
+        }
+
+        function getTranslation(key) { return i18nData[globalLang][key] || key; }
 
         // --- VIEW MANAGEMENT LOGIC ---
         function showBaseView(viewId) {
-            [...BASE_VIEWS, ...SUB_VIEWS].forEach(id => {
-                const el = document.getElementById(id);
-                if(el) { el.classList.add('hidden'); el.classList.remove('flex'); }
+            ['profileView', 'chantsView', 'formView', 'placeView'].forEach(id => {
+                const el = document.getElementById(id); if(el) { el.classList.add('hidden'); el.classList.remove('flex'); }
+            });
+            ['detailView', 'deityView', 'reviewFormView'].forEach(id => {
+                const el = document.getElementById(id); if(el) { el.classList.add('hidden'); el.classList.remove('flex'); }
             });
             if(viewId) {
-                const el = document.getElementById(viewId);
-                if(el) { el.classList.remove('hidden'); el.classList.add('flex'); }
+                const el = document.getElementById(viewId); if(el) { el.classList.remove('hidden'); el.classList.add('flex'); }
             }
-            checkNavState();
+        }
+
+        function closeBaseView(id) {
+            const el = document.getElementById(id); if(el) { el.classList.add('hidden'); el.classList.remove('flex'); }
         }
 
         function showSubView(viewId) {
-            if(viewId) {
-                const el = document.getElementById(viewId);
-                if(el) { el.classList.remove('hidden'); el.classList.add('flex'); }
-            }
-            checkNavState();
+            if(viewId) { const el = document.getElementById(viewId); if(el) { el.classList.remove('hidden'); el.classList.add('flex'); } }
         }
 
         function closeSubView(id) {
-            const el = document.getElementById(id);
-            if(el) { el.classList.add('hidden'); el.classList.remove('flex'); }
-            checkNavState();
-        }
-
-        function setNavState(isHome) {
-            const inner = document.getElementById('bottomNavInner');
-            if (isHome) {
-                inner.className = "pointer-events-auto bg-white/95 backdrop-blur-xl flex justify-between items-center relative transition-all duration-300 mx-6 mb-6 rounded-[2rem] border border-slate-100 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.15)] px-6 py-3";
-            } else {
-                inner.className = "pointer-events-auto bg-white/95 backdrop-blur-xl flex justify-between items-center relative transition-all duration-300 mx-0 mb-0 rounded-t-[2rem] border-t border-slate-200 shadow-[0_-10px_40px_-10px_rgba(0,0,0,0.05)] px-8 py-4";
-            }
+            const el = document.getElementById(id); if(el) { el.classList.add('hidden'); el.classList.remove('flex'); }
         }
 
         function updateNavActive(activeId) {
@@ -512,25 +567,20 @@
             for(let key in btns) {
                 if(btns[key]) {
                     if(key === activeId) {
-                        btns[key].classList.remove('text-slate-400', 'text-orange-500'); btns[key].classList.add('text-blue-600'); 
-                        btns[key].querySelector('span').classList.remove('font-medium', 'text-slate-400', 'text-blue-600'); btns[key].querySelector('span').classList.add('font-bold', 'text-orange-500'); 
+                        btns[key].classList.remove('text-slate-400'); btns[key].classList.add('text-blue-600'); 
+                        btns[key].querySelector('span').classList.remove('font-medium', 'text-slate-400'); btns[key].querySelector('span').classList.add('font-bold', 'text-orange-500'); 
                     } else {
-                        btns[key].classList.remove('text-blue-600', 'text-orange-500'); btns[key].classList.add('text-slate-400');
-                        btns[key].querySelector('span').classList.remove('font-bold', 'text-orange-500', 'text-blue-600'); btns[key].querySelector('span').classList.add('font-medium', 'text-slate-400');
+                        btns[key].classList.remove('text-blue-600'); btns[key].classList.add('text-slate-400');
+                        btns[key].querySelector('span').classList.remove('font-bold', 'text-orange-500'); btns[key].querySelector('span').classList.add('font-medium');
                     }
                 }
             }
         }
 
-        function checkNavState() {
-            const views = [...BASE_VIEWS, ...SUB_VIEWS];
-            const isAnyViewOpen = views.some(id => !document.getElementById(id).classList.contains('hidden'));
-            setNavState(!isAnyViewOpen);
-        }
-
         // --- INIT SYSTEM ---
         window.onload = () => {
             currentUser = JSON.parse(localStorage.getItem('saddha_user'));
+            applyLanguage();
             updateSidebarAuth();
             initMapSystem();
             updateNavActive('home');
@@ -541,16 +591,15 @@
             const area = document.getElementById('sidebarAuthArea');
             if (currentUser) {
                 document.getElementById('greetingName').innerText = `${currentUser.name}`; 
-                area.innerHTML = `<button onclick="logout()" class="w-full text-left px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 font-bold flex items-center gap-3 transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg> ออกจากระบบ</button>`;
+                area.innerHTML = `<button onclick="logout()" class="w-full text-left px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 font-bold flex items-center gap-3 transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg> ${getTranslation('menu_logout')}</button>`;
             } else {
-                document.getElementById('greetingName').innerText = `ผู้ใช้งานทั่วไป`;
-                area.innerHTML = `<button onclick="openAuth()" class="w-full text-left px-4 py-3 rounded-xl text-blue-600 bg-blue-50 font-bold flex items-center gap-3 transition-colors hover:bg-blue-100">เข้าสู่ระบบ / สมัครสมาชิก</button>`;
+                document.getElementById('greetingName').innerText = getTranslation('guest');
+                area.innerHTML = `<button onclick="openAuth()" class="w-full text-left px-4 py-3 rounded-xl text-blue-600 bg-blue-50 font-bold flex items-center gap-3 transition-colors hover:bg-blue-100">${getTranslation('login')} / ${getTranslation('register')}</button>`;
             }
         }
 
         function openAuth() { const el = document.getElementById('authView'); el.classList.remove('hidden'); el.classList.add('flex'); }
         function closeAuth() { const el = document.getElementById('authView'); el.classList.add('hidden'); el.classList.remove('flex'); }
-
         function toggleAuthMode() {
             const loginForm = document.getElementById('loginForm'); const regForm = document.getElementById('registerForm');
             if(loginForm.classList.contains('hidden')) { loginForm.classList.remove('hidden'); regForm.classList.add('hidden'); } 
@@ -560,15 +609,14 @@
         async function handleAuth(event, type) {
             event.preventDefault();
             const btn = type === 'login' ? document.getElementById('loginBtn') : document.getElementById('regBtn');
-            const originalText = btn.innerText;
-            btn.innerText = "กำลังประมวลผล... ⏳"; btn.disabled = true;
+            const originalText = btn.innerText; btn.innerText = "⏳..."; btn.disabled = true;
 
             const payload = { action: type };
             if(type === 'login') {
                 payload.username = document.getElementById('loginUser').value; payload.password = document.getElementById('loginPass').value;
             } else {
                 const pass = document.getElementById('regPass').value; const confirmPass = document.getElementById('regPassConfirm').value;
-                if (pass !== confirmPass) { alert("รหัสผ่านไม่ตรงกัน กรุณาตรวจสอบอีกครั้ง"); btn.innerText = originalText; btn.disabled = false; return; }
+                if (pass !== confirmPass) { alert(getTranslation('alert_pwd_match')); btn.innerText = originalText; btn.disabled = false; return; }
                 payload.name = document.getElementById('regName').value; payload.username = document.getElementById('regUser').value; payload.password = pass;
             }
 
@@ -580,11 +628,10 @@
                     localStorage.setItem('saddha_user', JSON.stringify(userData)); currentUser = userData; updateSidebarAuth();
                     document.getElementById('authView').classList.add('fade-out');
                     setTimeout(() => { closeAuth(); document.getElementById('authView').classList.remove('fade-out'); goHome(); }, 400);
-                } else { alert("❌ ข้อผิดพลาด: " + result.message); }
-            } catch (err) { alert("เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล กรุณาลองใหม่อีกครั้ง"); }
+                } else { alert("❌: " + result.message); }
+            } catch (err) { alert(getTranslation('alert_err_db')); }
             btn.innerText = originalText; btn.disabled = false;
         }
-
         function logout() { localStorage.removeItem('saddha_user'); location.reload(); }
 
         // --- MAP LOGIC ---
@@ -592,6 +639,7 @@
             map = L.map('map', { zoomControl: false }).setView([13.7563, 100.5018], 14);
             L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '© OpenStreetMap' }).addTo(map);
             templeMarkers = L.layerGroup().addTo(map);
+            
             map.on('dragend', () => { document.getElementById('searchAreaBtn').classList.remove('hidden'); });
             initGPS(false);
             loadTemplesNearby(13.7563, 100.5018); // Default BKK
@@ -599,20 +647,20 @@
 
         async function searchCurrentArea() {
             const btn = document.getElementById('searchAreaBtn');
-            btn.innerHTML = `<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> กำลังค้นหา...`;
+            btn.innerHTML = `<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>...`;
             const center = map.getCenter();
             await loadTemplesNearby(center.lat, center.lng);
             btn.classList.add('hidden');
-            btn.innerHTML = "ค้นหาบริเวณนี้";
+            btn.innerHTML = getTranslation('search_area');
         }
 
         function initGPS(forceManualClick) {
             const searchInput = document.getElementById('searchInput');
             if (navigator.geolocation) {
-                searchInput.placeholder = "🛰️ กำลังระบุพิกัด...";
+                searchInput.placeholder = "...";
                 navigator.geolocation.getCurrentPosition(
-                    (pos) => { const lat = pos.coords.latitude; const lng = pos.coords.longitude; updateUserOnMap(lat, lng); loadTemplesNearby(lat, lng); searchInput.placeholder = "ค้นหาสถานที่..."; },
-                    (err) => { searchInput.placeholder = "ค้นหาสถานที่..."; }
+                    (pos) => { const lat = pos.coords.latitude; const lng = pos.coords.longitude; updateUserOnMap(lat, lng); loadTemplesNearby(lat, lng); searchInput.placeholder = getTranslation('search_plc'); },
+                    (err) => { searchInput.placeholder = getTranslation('search_plc'); }
                 );
             }
         }
@@ -633,30 +681,24 @@
                 let templesToSave = [];
                 if (data.elements) {
                     data.elements.forEach(element => {
-                        const name = element.tags['name:th'] || element.tags['name:en'] || element.tags.name;
+                        const name = globalLang === 'en' ? (element.tags['name:en'] || element.tags['name:th'] || element.tags.name) : (element.tags['name:th'] || element.tags['name:en'] || element.tags.name);
                         if ((element.lat || element.center) && name) templesToSave.push({ lat: element.lat || element.center.lat, lng: element.lon || element.center.lon, name: name });
                     });
                 }
-                
-                if(templesToSave.length === 0) {
-                    templeMarkers.clearLayers();
-                } else {
-                    renderMarkers(templesToSave);
-                }
+                if(templesToSave.length === 0) { templeMarkers.clearLayers(); } 
+                else { renderMarkers(templesToSave); }
             } catch (err) {
-                console.error(err);
                 const searchBtn = document.getElementById('searchAreaBtn');
                 if (searchBtn) {
-                    searchBtn.innerHTML = "เซิร์ฟเวอร์หน่วง กรุณาลองใหม่";
-                    searchBtn.classList.remove('hidden');
-                    setTimeout(() => { searchBtn.innerHTML = "ค้นหาบริเวณนี้"; }, 3000);
+                    searchBtn.innerHTML = getTranslation('alert_server_busy'); searchBtn.classList.remove('hidden');
+                    setTimeout(() => { searchBtn.innerHTML = getTranslation('search_area'); }, 3000);
                 }
             }
         }
 
         function getMockRating(name) {
             let hash = 0; for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-            const famousMap = [ { text: "ขอพรความรัก", cat: "love" }, { text: "โชคลาภ/หวย", cat: "wealth" }, { text: "การงาน/เลื่อนขั้น", cat: "work" } ];
+            const famousMap = [ { text: "❤️ " + (globalLang==='en'?"Love":"ความรัก"), cat: "love" }, { text: "💰 " + (globalLang==='en'?"Wealth":"โชคลาภ"), cat: "wealth" }, { text: "💼 " + (globalLang==='en'?"Work":"การงาน"), cat: "work" } ];
             let religion = 'buddhist';
             const lowerName = name.toLowerCase();
             if (lowerName.includes('ศาล') || lowerName.includes('เจ้า') || lowerName.includes('shrine')) religion = 'chinese'; 
@@ -675,8 +717,8 @@
                     marker.bindPopup(`
                         <div class="p-4 w-[220px] text-center">
                             <h3 class="font-bold text-slate-900 text-lg mb-2">${t.name}</h3>
-                            <div class="mb-4"><span class="bg-blue-50 text-blue-600 text-[10px] px-3 py-1 rounded-lg font-bold">🔥 เด่น: ${mock.famous}</span></div>
-                            <button onclick="openPlacePreview('${t.name}')" class="w-full bg-blue-600 text-white py-2 rounded-xl text-xs font-bold hover:scale-105 active:scale-95 transition-all pointer-events-auto">ดูข้อมูลเพิ่มเติม</button>
+                            <div class="mb-4"><span class="bg-blue-50 text-blue-600 text-[10px] px-3 py-1 rounded-lg font-bold">${getTranslation('famous')} ${mock.famous}</span></div>
+                            <button onclick="openPlacePreview('${t.name}')" class="w-full bg-blue-600 text-white py-2 rounded-xl text-xs font-bold hover:scale-105 active:scale-95 transition-all pointer-events-auto">${globalLang==='en'?'View Details':'ดูข้อมูลเพิ่มเติม'}</button>
                         </div>
                     `, { autoPan: true, autoPanPaddingTopLeft: [20, 160], autoPanPaddingBottomRight: [20, 80] });
                 }
@@ -689,8 +731,7 @@
                 if (type === 'topic') { if (currentFilterState.topics.has(value)) currentFilterState.topics.delete(value); else currentFilterState.topics.add(value); } 
                 if (type === 'religion') { if (currentFilterState.religions.has(value)) currentFilterState.religions.delete(value); else currentFilterState.religions.add(value); } 
             }
-            updateFilterUI();
-            searchCurrentArea(); 
+            updateFilterUI(); searchCurrentArea(); 
         }
 
         function updateFilterUI() {
@@ -717,43 +758,36 @@
             clearTimeout(searchTimeout); document.getElementById('searchStatus').innerHTML = '<div class="w-4 h-4 border-2 border-slate-300 border-t-blue-600 rounded-full animate-spin"></div>';
             searchTimeout = setTimeout(async () => {
                 try {
-                    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&accept-language=th,en`;
+                    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&accept-language=${globalLang==='en'?'en':'th,en'}`;
                     const res = await fetch(url); const results = await res.json();
                     list.innerHTML = '';
                     if (results.length > 0) { list.classList.remove('hidden'); results.forEach(place => { const li = document.createElement('li'); li.className = "px-4 py-3 border-b border-slate-50 hover:bg-slate-100 cursor-pointer text-sm text-slate-700 flex items-center justify-between rounded-xl transition-colors"; li.innerHTML = `<span>${place.display_name.split(',')[0]}</span>`; li.onclick = () => { selectSearchResult(place.lat, place.lon, place.display_name.split(',')[0]); }; list.appendChild(li); }); } 
-                    else { list.innerHTML = '<li class="px-4 py-3 text-sm text-slate-400 text-center">ไม่พบสถานที่</li>'; list.classList.remove('hidden'); }
+                    else { list.innerHTML = `<li class="px-4 py-3 text-sm text-slate-400 text-center">${globalLang==='en'?'No places found':'ไม่พบสถานที่'}</li>`; list.classList.remove('hidden'); }
                 } finally { document.getElementById('searchStatus').innerHTML = ""; }
             }, 500);
         }
 
-        // ==========================================
-        // 🔴 แก้ไขระบบค้นหาสถานที่ (หมุดสีส้มแสดง Popup ข้อมูลทันที) 🔴
-        // ==========================================
+        // --- แก้ไขค้นหาให้แสดงหมุดส้มและโหลดสถานที่ใกล้เคียง ---
         function selectSearchResult(lat, lon, name) { 
             document.getElementById('suggestionList').classList.add('hidden'); 
             document.getElementById('searchInput').value = name; 
             
-            // ลบหมุดเดิมและสร้างหมุดส้มใหม่
             if (userMarker) map.removeLayer(userMarker);
             const userIcon = L.divIcon({ className: 'css-icon', html: '<div class="gps-ring"></div><div style="background-color:#f97316; width:12px; height:12px; border-radius:50%; border:2px solid white; box-shadow:0 0 5px rgba(249,115,22,0.5);"></div>', iconSize: [20, 20], iconAnchor: [10, 10] });
             userMarker = L.marker([lat, lon], {icon: userIcon}).addTo(map);
             
-            // เพิ่ม Popup ข้อมูลสถานที่เข้าไปที่หมุดสีส้ม
             const mock = getMockRating(name);
             userMarker.bindPopup(`
                 <div class="p-4 w-[220px] text-center">
                     <h3 class="font-bold text-slate-900 text-lg mb-2">${name}</h3>
-                    <div class="mb-4"><span class="bg-blue-50 text-blue-600 text-[10px] px-3 py-1 rounded-lg font-bold">🔥 เด่น: ${mock.famous}</span></div>
-                    <button onclick="openPlacePreview('${name}')" class="w-full bg-blue-600 text-white py-2 rounded-xl text-xs font-bold hover:scale-105 active:scale-95 transition-all pointer-events-auto">ดูข้อมูลเพิ่มเติม</button>
+                    <div class="mb-4"><span class="bg-blue-50 text-blue-600 text-[10px] px-3 py-1 rounded-lg font-bold">${getTranslation('famous')} ${mock.famous}</span></div>
+                    <button onclick="openPlacePreview('${name}')" class="w-full bg-blue-600 text-white py-2 rounded-xl text-xs font-bold hover:scale-105 active:scale-95 transition-all pointer-events-auto">${globalLang==='en'?'View Details':'ดูข้อมูลเพิ่มเติม'}</button>
                 </div>
             `, { autoPan: true, autoPanPaddingTopLeft: [20, 160], autoPanPaddingBottomRight: [20, 80] }).openPopup();
             
             map.flyTo([lat, lon], 16, { duration: 1.5 }); 
             document.getElementById('searchAreaBtn').classList.add('hidden');
-            
-            // สั่งโหลดสถานที่รอบๆ เผื่อไว้ให้เห็นหมุดน้ำเงินข้างๆ
             setTimeout(() => loadTemplesNearby(lat, lon), 1500); 
-            
             goHome();
         }
 
@@ -770,12 +804,9 @@
         function goHome() { 
             const sb = document.getElementById('sidebarMenu'); const ol = document.getElementById('sidebarOverlay');
             if (!sb.classList.contains('hidden')) { sb.classList.remove('slide-in'); sb.classList.add('slide-out'); setTimeout(() => sb.classList.add('hidden'), 300); ol.classList.add('hidden'); }
-            
-            showBaseView(null);
-            setTimeout(() => map.invalidateSize(), 300);
-            updateNavActive('home'); 
+            showBaseView(null); updateNavActive('home'); 
         }
-
+        
         function openForm(placeName, isManual) {
             if (!currentUser) { openAuth(); return; }
             goHome(); 
@@ -787,71 +818,42 @@
             updateNavActive('');
         }
 
-        function closePlacePreview() {
-            closeSubView('placeView');
-        }
-
         // --- PLACE REVIEWS LOGIC ---
         function openPlacePreview(name) {
             currentPlaceName = name; const mock = getMockRating(name);
             document.getElementById('viewPlaceName').innerText = name; document.getElementById('viewPlaceFamous').innerText = mock.famous;
             
             const reviewList = document.getElementById('viewPlaceReviewsList'); reviewList.innerHTML = '';
-            
             const savedReviews = JSON.parse(localStorage.getItem('saddha_place_reviews')) || {};
             const placeReviews = savedReviews[name] || [];
             
             placeReviews.forEach((r, idx) => {
                 const div = document.createElement('div'); div.className = "bg-slate-50 p-5 rounded-3xl border border-slate-200 relative group shadow-sm";
                 const deleteBtn = `<button onclick="deleteReview('${name}', ${idx})" class="text-slate-400 hover:text-red-500 p-1 bg-white rounded-full shadow-sm"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>`;
-                div.innerHTML = `
-                    <div class="flex items-center justify-between mb-3">
-                        <div class="flex items-center gap-2"><div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-xs text-white font-bold">Me</div><span class="text-sm font-bold text-slate-800">${r.user}</span></div>
-                        <div class="flex items-center gap-2">
-                            <div class="text-yellow-500 text-xs">${"★".repeat(r.rating)}</div>
-                            ${deleteBtn}
-                        </div>
-                    </div>
-                    <p class="text-sm text-slate-600 leading-relaxed font-medium">"${r.text}"</p>`;
+                div.innerHTML = `<div class="flex items-center justify-between mb-3"><div class="flex items-center gap-2"><div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-xs text-white font-bold">Me</div><span class="text-sm font-bold text-slate-800">${r.user}</span></div><div class="flex items-center gap-2"><div class="text-yellow-500 text-xs">${"★".repeat(r.rating)}</div>${deleteBtn}</div></div><p class="text-sm text-slate-600 leading-relaxed font-medium">"${r.text}"</p>`;
                 reviewList.appendChild(div);
             });
             
             const mockReviews = [
-                { user: "ผู้ศรัทธา", text: "ศักดิ์สิทธิ์มากครับ ขอพรได้จริง", rating: 5 },
-                { user: "นักเดินทาง", text: "บรรยากาศดี สงบ เหมาะแก่การทำสมาธิ", rating: 4 },
-                { user: "สายมูตัวยง", text: "มาแล้วสมหวังดั่งใจ แนะนำเลยครับ", rating: 5 }
+                { user: globalLang==='en'?"Believer":"ผู้ศรัทธา", text: globalLang==='en'?"Very sacred!":"ศักดิ์สิทธิ์มากครับ ขอพรได้จริง", rating: 5 },
+                { user: globalLang==='en'?"Traveler":"นักเดินทาง", text: globalLang==='en'?"Good atmosphere.":"บรรยากาศดี สงบ เหมาะแก่การทำสมาธิ", rating: 4 }
             ];
             mockReviews.forEach(r => {
                 const div = document.createElement('div'); div.className = "bg-white p-5 rounded-3xl shadow-sm border border-slate-100";
-                div.innerHTML = `
-                    <div class="flex items-center justify-between mb-3">
-                        <div class="flex items-center gap-2"><div class="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-xs text-slate-500 font-bold">U</div><span class="text-sm font-bold text-slate-700">${r.user}</span></div>
-                        <div class="text-yellow-400 text-xs">${"★".repeat(r.rating)}</div>
-                    </div>
-                    <p class="text-sm text-slate-600 leading-relaxed font-medium">"${r.text}"</p>`;
+                div.innerHTML = `<div class="flex items-center justify-between mb-3"><div class="flex items-center gap-2"><div class="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-xs text-slate-500 font-bold">U</div><span class="text-sm font-bold text-slate-700">${r.user}</span></div><div class="text-yellow-400 text-xs">${"★".repeat(r.rating)}</div></div><p class="text-sm text-slate-600 leading-relaxed font-medium">"${r.text}"</p>`;
                 reviewList.appendChild(div);
             });
-            
-            const btnContainer = document.getElementById('viewPlaceRecordBtn').parentNode;
-            const newBtn = document.createElement('button'); newBtn.id = 'viewPlaceRecordBtn'; newBtn.className = 'pointer-events-auto w-full bg-blue-600 text-white py-4 rounded-2xl font-bold shadow-xl shadow-blue-600/20 hover:scale-[1.02] active:scale-95 transition-all text-lg'; newBtn.innerHTML = 'บันทึกการบนบาน'; newBtn.onclick = function() { openForm(name, false); };
-            btnContainer.replaceChild(newBtn, document.getElementById('viewPlaceRecordBtn'));
-
             showBaseView('placeView');
         }
 
         async function savePrayer(event) {
             event.preventDefault();
-            const btn = document.getElementById('saveButton'); const origText = btn.innerText;
-            btn.innerText = "กำลังบันทึกและส่งข้อมูล... ⏳"; btn.disabled = true;
+            const btn = document.getElementById('saveButton'); const origText = btn.innerText; btn.innerText = "⏳..."; btn.disabled = true;
 
             const newItem = {
-                id: Date.now(),
-                place: document.getElementById('placeInput').value,
-                title: document.getElementById('title').value,
-                type: document.getElementById('type').value,
-                deadline: document.getElementById('deadline').value,
-                offeringItem: document.getElementById('offeringItem').value,
-                offeringAmount: document.getElementById('offeringAmount').value,
+                id: Date.now(), place: document.getElementById('placeInput').value, title: document.getElementById('title').value,
+                type: document.getElementById('type').value, deadline: document.getElementById('deadline').value,
+                offeringItem: document.getElementById('offeringItem').value, offeringAmount: document.getElementById('offeringAmount').value,
                 offering: `${document.getElementById('offeringItem').value} ${document.getElementById('offeringAmount').value}`,
                 status: 'pending', date: new Date().toLocaleDateString('th-TH')
             };
@@ -863,9 +865,7 @@
                 const payload = { ...newItem, action: "save_prayer", user: currentUser.username };
                 await fetch(API_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload) });
             } catch(e) { console.error("Cloud Save Failed", e); }
-
-            btn.innerText = origText; btn.disabled = false;
-            alert(`✅ บันทึกข้อมูลสำเร็จ!`); openProfile(); 
+            btn.innerText = origText; btn.disabled = false; alert(getTranslation('alert_save_ok')); openProfile(); 
         }
 
         function openProfile() { 
@@ -877,25 +877,26 @@
         function renderPrayerList() {
             const favList = document.getElementById('favoriteList'); favList.innerHTML = '';
             const favIds = JSON.parse(localStorage.getItem('saddha_favorites')) || [];
-            if(favIds.length === 0) { favList.innerHTML = '<div class="text-center text-xs text-slate-400 py-6 border-2 border-dashed border-slate-200 rounded-3xl">ยังไม่มีสิ่งศักดิ์สิทธิ์ที่นับถือ<br>ไปที่เมนูข้อมูลสิ่งศักดิ์สิทธิ์เพื่อกดหัวใจ</div>'; }
+            if(favIds.length === 0) { favList.innerHTML = `<div class="text-center text-xs text-slate-400 py-6 border-2 border-dashed border-slate-200 rounded-3xl">${globalLang==='en'?'No favorites yet.':'ยังไม่มีสิ่งศักดิ์สิทธิ์ที่นับถือ'}</div>`; }
             else {
                 favIds.forEach(id => {
                     const d = deitiesData.find(x => x.id === id);
                     if(d) {
-                        const el = document.createElement('div');
-                        el.className = 'w-full bg-white p-3.5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4 cursor-pointer hover:shadow-md transition-all';
+                        const name = globalLang==='en' ? d.name_en : d.name;
+                        const desc = globalLang==='en' ? d.desc_en : d.desc;
+                        const el = document.createElement('div'); el.className = 'w-full bg-white p-3.5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4 cursor-pointer hover:shadow-md transition-all';
                         el.onclick = () => openDeityDetail(d.id);
-                        el.innerHTML = `<img src="${d.img}" class="w-12 h-12 rounded-full object-cover border border-slate-100 shadow-sm flex-shrink-0" onerror="this.src='https://placehold.co/100x100?text=Icon'"><div class="flex-1 min-w-0"><h4 class="font-bold text-slate-800 text-sm truncate">${d.name}</h4><p class="text-[10px] text-slate-500 truncate">${d.desc}</p></div><svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>`;
+                        el.innerHTML = `<img src="${d.img}" class="w-12 h-12 rounded-full object-cover border border-slate-100 shadow-sm flex-shrink-0" onerror="this.src='https://placehold.co/100x100?text=Icon'"><div class="flex-1 min-w-0"><h4 class="font-bold text-slate-800 text-sm truncate">${name}</h4><p class="text-[10px] text-slate-500 truncate">${desc}</p></div><svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>`;
                         favList.appendChild(el);
                     }
                 });
             }
 
-            const list = document.getElementById('prayerList'); document.getElementById('totalItems').innerText = `${prayers.length} รายการ`; list.innerHTML = '';
-            if (prayers.length === 0) { list.innerHTML = '<div class="text-center text-slate-400 mt-10">ยังไม่มีข้อมูลการบนบาน</div>'; return; }
+            const list = document.getElementById('prayerList'); document.getElementById('totalItems').innerText = `${prayers.length} ${globalLang==='en'?'Items':'รายการ'}`; list.innerHTML = '';
+            if (prayers.length === 0) { list.innerHTML = `<div class="text-center text-slate-400 mt-10">${globalLang==='en'?'No records found.':'ยังไม่มีข้อมูลการบนบาน'}</div>`; return; }
             [...prayers].reverse().forEach((item) => {
                 const el = document.createElement('div'); el.className = "bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex items-center gap-3 mb-3 cursor-pointer hover:shadow-md transition-all";
-                el.onclick = () => openDetail(item.id); el.innerHTML = `<div class="flex-1"><h4 class="font-bold text-slate-800 text-sm">${item.title}</h4><p class="text-[10px] text-slate-500 mt-1 font-medium">📍 ${item.place}</p></div><div class="flex flex-col items-end gap-1"><span class="text-[10px] bg-blue-50 text-blue-600 px-3 py-1 rounded-lg font-bold shadow-sm">⏳ รอผล</span><span class="text-[10px] text-slate-400 font-medium">${item.date}</span></div>`;
+                el.onclick = () => openDetail(item.id); el.innerHTML = `<div class="flex-1"><h4 class="font-bold text-slate-800 text-sm">${item.title}</h4><p class="text-[10px] text-slate-500 mt-1 font-medium">📍 ${item.place}</p></div><div class="flex flex-col items-end gap-1"><span class="text-[10px] bg-blue-50 text-blue-600 px-3 py-1 rounded-lg font-bold shadow-sm">${getTranslation('status_pending')}</span><span class="text-[10px] text-slate-400 font-medium">${item.date}</span></div>`;
                 list.appendChild(el);
             });
         }
@@ -904,31 +905,21 @@
             currentDetailId = id; const item = prayers.find(p => p.id === id); if(!item) return;
             document.getElementById('detailTitle').innerText = item.title; document.getElementById('detailPlace').innerText = item.place; document.getElementById('detailType').innerText = categoryLabels[item.type] || item.type; document.getElementById('detailOffering').innerText = item.offering;
             const actionsDiv = document.getElementById('statusActions');
-            if (item.status === 'pending') { actionsDiv.innerHTML = `<div class="grid grid-cols-2 gap-3"><button onclick="markStatus('success')" class="bg-blue-600 text-white py-3 rounded-xl font-bold shadow-lg hover:scale-105 active:scale-95 transition-all">✅ สำเร็จ</button><button onclick="markStatus('fail')" class="bg-white border border-slate-200 text-slate-700 py-3 rounded-xl font-bold hover:bg-slate-50 transition-colors">❌ ไม่สำเร็จ</button></div>`; } 
-            else if (item.status === 'waiting_vow') { actionsDiv.innerHTML = `<div class="p-4 bg-orange-50 text-orange-600 rounded-2xl text-center font-bold">🙏 รอแก้บน</div>`; } 
-            else { actionsDiv.innerHTML = `<div class="p-4 bg-slate-100 text-slate-500 rounded-2xl text-center font-bold">จบรายการแล้ว</div>`; }
+            if (item.status === 'pending') { actionsDiv.innerHTML = `<div class="grid grid-cols-2 gap-3"><button onclick="markStatus('success')" class="bg-blue-600 text-white py-3 rounded-xl font-bold shadow-lg hover:scale-105 active:scale-95 transition-all">${getTranslation('btn_success')}</button><button onclick="markStatus('fail')" class="bg-white border border-slate-200 text-slate-700 py-3 rounded-xl font-bold hover:bg-slate-50 transition-colors">${getTranslation('btn_fail')}</button></div>`; } 
+            else if (item.status === 'waiting_vow') { actionsDiv.innerHTML = `<div class="p-4 bg-orange-50 text-orange-600 rounded-2xl text-center font-bold">${getTranslation('status_waiting')}</div>`; } 
+            else { actionsDiv.innerHTML = `<div class="p-4 bg-slate-100 text-slate-500 rounded-2xl text-center font-bold">${getTranslation('status_ended')}</div>`; }
             showSubView('detailView');
         }
-        function markStatus(s) { const item = prayers.find(p => p.id === currentDetailId); if(!item) return; item.status = s === 'success' ? 'waiting_vow' : 'fail'; localStorage.setItem('saddha_prayers', JSON.stringify(prayers)); alert("บันทึกสถานะเรียบร้อย"); openProfile(); }
+        function markStatus(s) { const item = prayers.find(p => p.id === currentDetailId); if(!item) return; item.status = s === 'success' ? 'waiting_vow' : 'fail'; localStorage.setItem('saddha_prayers', JSON.stringify(prayers)); alert(getTranslation('alert_save_ok')); openProfile(); }
 
         function openChants() {
             goHome(); const container = document.getElementById('chantsContainer'); container.innerHTML = '';
             deitiesData.forEach(c => { 
-                const isFav = favorites.includes(c.id);
-                const heartClass = isFav ? "text-red-500 fill-current" : "text-slate-300";
+                const isFav = favorites.includes(c.id); const heartClass = isFav ? "text-red-500 fill-current" : "text-slate-300";
+                const name = globalLang==='en' ? c.name_en : c.name; const desc = globalLang==='en' ? c.desc_en : c.desc; const text = globalLang==='en' ? c.text_en : c.text;
                 
                 const el = document.createElement('div'); el.className = "bg-white p-5 rounded-3xl shadow-sm border border-slate-100 mb-4 flex items-start gap-4 cursor-pointer hover:shadow-md transition-all"; el.onclick = () => openDeityDetail(c.id); 
-                el.innerHTML = `
-                    <img src="${c.img}" class="w-16 h-16 rounded-full object-cover border border-slate-100 shadow-sm flex-shrink-0" onerror="this.src='https://placehold.co/100x100?text=Icon'">
-                    <div class="flex-1">
-                        <div class="flex justify-between items-start mb-1">
-                            <h3 class="text-lg font-bold text-slate-800">${c.name}</h3>
-                            <button onclick="toggleFavorite(event, ${c.id})" class="p-1.5 bg-slate-50 rounded-full heart-icon ${heartClass}"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path></svg></button>
-                        </div>
-                        <p class="text-xs text-slate-500 mb-3">${c.desc}</p>
-                        <div class="bg-slate-50 px-3 py-2 rounded-xl"><p class="text-[10px] text-blue-600 font-medium whitespace-normal break-words">"${c.text}"</p></div>
-                    </div>
-                `; container.appendChild(el); 
+                el.innerHTML = `<img src="${c.img}" class="w-16 h-16 rounded-full object-cover border border-slate-100 shadow-sm flex-shrink-0" onerror="this.src='https://placehold.co/100x100?text=Icon'"><div class="flex-1"><div class="flex justify-between items-start mb-1"><h3 class="text-lg font-bold text-slate-800">${name}</h3><button onclick="toggleFavorite(event, ${c.id})" class="p-1.5 bg-slate-50 rounded-full heart-icon ${heartClass}"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path></svg></button></div><p class="text-xs text-slate-500 mb-3">${desc}</p><div class="bg-slate-50 px-3 py-2 rounded-xl"><p class="text-[10px] text-blue-600 font-medium whitespace-normal break-words">"${text}"</p></div></div>`; container.appendChild(el); 
             });
             showBaseView('chantsView'); updateNavActive('chants');
         }
@@ -946,7 +937,11 @@
 
         function openDeityDetail(id) {
             const d = deitiesData.find(x => x.id === id); if(!d) return;
-            document.getElementById('deityTitle').innerText = d.name; document.getElementById('deityDesc').innerText = d.desc; document.getElementById('deityOffer').innerText = d.offer; document.getElementById('deityChant').innerText = `"${d.text}"`; document.getElementById('deityImage').src = d.img;
+            document.getElementById('deityTitle').innerText = globalLang==='en' ? d.name_en : d.name; 
+            document.getElementById('deityDesc').innerText = globalLang==='en' ? d.desc_en : d.desc; 
+            document.getElementById('deityOffer').innerText = globalLang==='en' ? d.offer_en : d.offer; 
+            document.getElementById('deityChant').innerText = `"${globalLang==='en' ? d.text_en : d.text}"`; 
+            document.getElementById('deityImage').src = d.img;
             
             const isFav = favorites.includes(id);
             const btn = document.getElementById('deityFavBtn');
@@ -958,11 +953,11 @@
         function toggleEditMode() {} function deleteCurrentItem() { if(!currentDetailId) return; if(confirm("ลบรายการนี้?")) { prayers = prayers.filter(p => p.id !== currentDetailId); localStorage.setItem('saddha_prayers', JSON.stringify(prayers)); openProfile(); } }
         function openReviewForm() { 
             if (!currentUser) { openAuth(); return; }
-            document.getElementById('reviewPlaceNameTarget').innerText = `รีวิว: ${currentPlaceName}`; document.getElementById('reviewText').value = ""; setReviewRating(5); 
+            document.getElementById('reviewPlaceNameTarget').innerText = `${getTranslation('review_title')}: ${currentPlaceName}`; document.getElementById('reviewText').value = ""; setReviewRating(5); 
             showSubView('reviewFormView');
         }
         function setReviewRating(n) { tempReviewRating = n; const stars = document.querySelectorAll('.review-star'); stars.forEach((star, index) => { if (index < n) { star.classList.remove('inactive'); star.classList.add('active'); } else { star.classList.remove('active'); star.classList.add('inactive'); } }); }
-        function submitReview() { const text = document.getElementById('reviewText').value; if(!text) { alert("กรุณาเขียนรีวิวสั้นๆ ก่อนส่งครับ"); return; } const reviews = JSON.parse(localStorage.getItem('saddha_place_reviews')) || {}; if (!reviews[currentPlaceName]) reviews[currentPlaceName] = []; reviews[currentPlaceName].unshift({ user: currentUser.name, rating: tempReviewRating, text: text, date: new Date().toLocaleDateString('th-TH') }); localStorage.setItem('saddha_place_reviews', JSON.stringify(reviews)); closeSubView('reviewFormView'); openPlacePreview(currentPlaceName); alert("ขอบคุณสำหรับรีวิวครับ 🙏"); }
+        function submitReview() { const text = document.getElementById('reviewText').value; if(!text) { alert(getTranslation('alert_review_req')); return; } const reviews = JSON.parse(localStorage.getItem('saddha_place_reviews')) || {}; if (!reviews[currentPlaceName]) reviews[currentPlaceName] = []; reviews[currentPlaceName].unshift({ user: currentUser.name, rating: tempReviewRating, text: text, date: new Date().toLocaleDateString('th-TH') }); localStorage.setItem('saddha_place_reviews', JSON.stringify(reviews)); closeSubView('reviewFormView'); openPlacePreview(currentPlaceName); alert(getTranslation('alert_thx_review')); }
         function toggleNotification() { const item = prayers.find(p => p.id === currentDetailId); if (!item) return; item.notificationsEnabled = document.getElementById('notifToggle').checked; saveData(); }
         function saveNotificationDate() { const item = prayers.find(p => p.id === currentDetailId); if (!item) return; item.customNotificationDate = document.getElementById('customNotifDate').value; saveData(); }
         function setTempRating(n) { tempRating = n; renderStars(n); }
