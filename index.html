@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ศรัทแทรค SaddhaTrack V8.3</title>
+    <title>ศรัทแทรค SaddhaTrack V8.4</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -76,7 +76,7 @@
         <div class="bg-white p-8 rounded-[2.5rem] w-11/12 max-w-sm relative z-10 fade-in">
             <div class="text-center mb-8">
                 <!-- LOGO INSERTED HERE -->
-                <img src="SaddhaTrack_Logo.jpg" alt="SaddhaTrack Logo" class="w-32 h-32 mx-auto mb-4 object-contain rounded-3xl shadow-sm">
+                <img src="SaddhaTrack_Logo.png" alt="SaddhaTrack Logo" class="w-32 h-32 mx-auto mb-4 object-contain rounded-3xl shadow-sm">
                 <p class="text-slate-500 text-sm mt-2 font-medium">เพราะศรัทธา... ติดตามผลได้</p>
             </div>
 
@@ -180,7 +180,7 @@
             </div>
             <div class="w-14"></div>
             <button onclick="openProfile()" class="flex flex-col items-center gap-1 w-16 text-slate-400 hover:text-slate-600 transition-colors">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
                 <span class="text-[10px] font-medium">รายการ</span>
             </button>
             <button onclick="toggleSidebar()" class="flex flex-col items-center gap-1 w-16 text-slate-400 hover:text-slate-600 transition-colors">
@@ -195,10 +195,10 @@
     <div id="sidebarMenu" class="hidden absolute top-0 left-0 w-3/4 max-w-xs h-full bg-white z-sidebar shadow-2xl flex flex-col border-r border-slate-100">
         <div class="p-6 bg-white border-b border-slate-100 pt-16 flex items-center gap-4">
             <!-- LOGO IN SIDEBAR -->
-            <img src="SaddhaTrack_Logo.jpg" alt="Logo" class="w-12 h-12 object-contain rounded-xl border border-slate-100 shadow-sm">
+            <img src="SaddhaTrack_Logo.png" alt="Logo" class="w-12 h-12 object-contain rounded-xl border border-slate-100 shadow-sm">
             <div>
                 <h2 class="text-xl font-bold text-slate-900">ศรัทแทรค</h2>
-                <p class="text-xs text-slate-500 mt-0.5">SaddhaTrack V8.3</p>
+                <p class="text-xs text-slate-500 mt-0.5">SaddhaTrack V8.4</p>
             </div>
         </div>
         <nav class="flex-1 p-4 space-y-2">
@@ -206,7 +206,7 @@
                 <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg> หน้าหลัก
             </button>
             <button onclick="openProfile()" class="w-full text-left px-4 py-3 rounded-xl hover:bg-slate-50 text-slate-700 font-medium flex items-center gap-3">
-                <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg> บัญชีของฉัน
+                <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg> บัญชีของฉัน
             </button>
             <div class="border-t border-slate-100 my-2"></div>
             <button onclick="openChants()" class="w-full text-left px-4 py-3 rounded-xl hover:bg-slate-50 text-slate-800 font-medium flex items-center gap-3">
@@ -739,9 +739,11 @@
                 status: 'pending', date: new Date().toLocaleDateString('th-TH')
             };
 
+            // Save Local first
             try { const existing = localStorage.getItem('saddha_prayers'); prayers = existing ? JSON.parse(existing) : []; } catch(e) { prayers = []; }
             prayers.push(newItem); localStorage.setItem('saddha_prayers', JSON.stringify(prayers));
 
+            // Save to Cloud via text/plain
             try {
                 const payload = { ...newItem, action: "save_prayer", user: currentUser.username };
                 await fetch(API_URL, { 
