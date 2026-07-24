@@ -11,10 +11,12 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
         
+        /* --- MOBILE APP FEEL --- */
         html, body {
             font-family: 'Sarabun', sans-serif;
-            width: 100%; height: 100%; overflow: hidden; background-color: #ffffff;
-            margin: 0; padding: 0; -webkit-tap-highlight-color: transparent;
+            width: 100%; height: 100%; position: fixed; overflow: hidden; background-color: #ffffff;
+            touch-action: none; -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none;
+            margin: 0; padding: 0;
         }
 
         .overflow-y-auto, .overflow-x-auto { touch-action: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain; }
@@ -30,8 +32,21 @@
         .leaflet-popup-content { margin: 0; width: 260px !important; }
         .leaflet-popup-tip { background: white; }
         
+        /* จุด GPS สีส้ม */
         .gps-ring { border: 3px solid #f97316; border-radius: 30px; height: 18px; width: 18px; animation: pulsate 1.5s ease-out infinite; opacity: 0.0; margin: -3px 0 0 -3px; }
         @keyframes pulsate { 0% { transform: scale(0.1, 0.1); opacity: 0.0; } 50% { opacity: 1.0; } 100% { transform: scale(1.2, 1.2); opacity: 0.0; } }
+
+        /* Z-INDEX SYSTEM */
+        .z-map          { z-index: 0; }
+        .z-map-controls { z-index: 10; }
+        .z-header       { z-index: 20; }
+        .z-view         { z-index: 30; } 
+        .z-subview      { z-index: 40; } 
+        .z-nav          { z-index: 50; } 
+        .z-modal        { z-index: 60; } 
+        .z-sidebar-overlay { z-index: 70; } 
+        .z-sidebar      { z-index: 71; }
+        .z-auth         { z-index: 100; } 
 
         .fade-in { animation: fadeIn 0.4s ease-out; }
         .fade-out { animation: fadeOut 0.4s ease-in forwards; }
@@ -63,7 +78,7 @@
 <body class="relative bg-white">
 
     <!-- AUTH VIEW (LOGIN / REGISTER) -->
-    <div id="authView" class="fixed inset-0 bg-white flex-col items-center justify-center z-[99999] fade-in" style="display: none;">
+    <div id="authView" class="fixed inset-0 bg-white flex-col items-center justify-center z-auth fade-in hidden">
         <button onclick="closeAuth()" class="absolute top-6 right-6 text-slate-400 hover:text-slate-900 bg-slate-50 rounded-full p-2 transition-colors z-20">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
@@ -76,24 +91,16 @@
 
             <!-- Login Form -->
             <form id="loginForm" onsubmit="handleAuth(event, 'login')" class="space-y-4">
-                <div>
-                    <input type="text" id="loginUser" required placeholder="ชื่อผู้ใช้งาน (Username)" class="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl p-4 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-400 transition-all">
-                </div>
-                <div>
-                    <input type="password" id="loginPass" required placeholder="รหัสผ่าน (Password)" class="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl p-4 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-400 transition-all">
-                </div>
+                <div><input type="text" id="loginUser" required placeholder="ชื่อผู้ใช้งาน (Username)" class="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl p-4 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-400 transition-all"></div>
+                <div><input type="password" id="loginPass" required placeholder="รหัสผ่าน (Password)" class="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl p-4 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-400 transition-all"></div>
                 <button type="submit" id="loginBtn" class="w-full bg-blue-600 text-white font-bold text-lg py-4 rounded-2xl shadow-xl shadow-blue-600/20 hover:scale-[1.02] active:scale-95 transition-all mt-4">เข้าสู่ระบบ</button>
                 <p class="text-center text-slate-500 text-sm mt-4">ยังไม่มีบัญชี? <span onclick="toggleAuthMode()" class="text-orange-500 font-bold cursor-pointer hover:underline">สมัครสมาชิก</span></p>
             </form>
 
             <!-- Register Form -->
             <form id="registerForm" onsubmit="handleAuth(event, 'register')" class="space-y-4 hidden">
-                <div>
-                    <input type="text" id="regName" required placeholder="ชื่อของคุณ (แสดงในแอป)" class="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-400 transition-all">
-                </div>
-                <div>
-                    <input type="text" id="regUser" required placeholder="ชื่อผู้ใช้งาน (Username)" class="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-400 transition-all">
-                </div>
+                <div><input type="text" id="regName" required placeholder="ชื่อของคุณ (แสดงในแอป)" class="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-400 transition-all"></div>
+                <div><input type="text" id="regUser" required placeholder="ชื่อผู้ใช้งาน (Username)" class="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-400 transition-all"></div>
                 <div class="grid grid-cols-2 gap-2">
                     <input type="password" id="regPass" required placeholder="รหัสผ่าน" class="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-400 transition-all text-sm">
                     <input type="password" id="regPassConfirm" required placeholder="ยืนยันรหัสผ่าน" class="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-400 transition-all text-sm">
@@ -105,17 +112,17 @@
     </div>
 
     <!-- MAIN APP CONTENT (MAP) -->
-    <div id="mapView" class="w-full h-full relative z-[0]">
-        <div id="map" class="absolute inset-0 z-0 bg-slate-50"></div>
+    <div id="mapView" class="w-full h-full relative z-map">
+        <div id="map" class="absolute inset-0 bg-slate-50"></div>
     </div>
 
     <!-- ปุ่มค้นหาบริเวณนี้ -->
-    <button id="searchAreaBtn" onclick="searchCurrentArea()" class="hidden absolute top-40 left-1/2 -translate-x-1/2 z-[1500] bg-blue-600 text-white px-5 py-2.5 rounded-full font-bold shadow-xl shadow-blue-600/20 active:scale-95 transition-all text-sm flex items-center gap-2">
+    <button id="searchAreaBtn" onclick="searchCurrentArea()" class="hidden absolute top-40 left-1/2 -translate-x-1/2 z-map-controls bg-blue-600 text-white px-5 py-2.5 rounded-full font-bold shadow-xl shadow-blue-600/20 active:scale-95 transition-all text-sm flex items-center gap-2">
         ค้นหาบริเวณนี้
     </button>
 
     <!-- TOP HEADER -->
-    <div class="absolute top-0 left-0 w-full z-[2000] pt-safe bg-gradient-to-b from-white via-white/90 to-transparent backdrop-blur-md pb-6 pointer-events-none">
+    <div class="absolute top-0 left-0 w-full z-header pt-safe bg-gradient-to-b from-white via-white/90 to-transparent backdrop-blur-md pb-6 pointer-events-none">
         <div class="px-6 flex justify-between items-center pointer-events-auto mt-2">
             <div>
                 <p class="text-[11px] text-slate-500 font-medium tracking-wide uppercase mb-0.5">ยินดีต้อนรับ</p>
@@ -155,14 +162,14 @@
     </div>
 
     <!-- GPS BUTTON -->
-    <div class="absolute bottom-32 right-6 z-[1900]">
+    <div class="absolute bottom-32 right-6 z-map-controls">
         <button onclick="initGPS(true)" class="bg-white/90 backdrop-blur-sm text-blue-600 p-3.5 rounded-full shadow-lg border border-slate-100 hover:bg-white active:scale-95 transition-all">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
         </button>
     </div>
 
     <!-- GLOBAL PERSISTENT BOTTOM NAVIGATION -->
-    <div id="bottomNavArea" class="fixed left-0 w-full bottom-0 transition-all duration-300 pointer-events-none pb-safe z-[9500]">
+    <div id="bottomNavArea" class="fixed left-0 w-full bottom-0 transition-all duration-300 pointer-events-none pb-safe z-nav">
         <div id="bottomNavInner" class="pointer-events-auto bg-white/95 backdrop-blur-xl flex justify-between items-center relative transition-all duration-300 mx-6 mb-6 rounded-[2rem] border border-slate-100 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.15)] px-6 py-3">
             <button id="nav-home" onclick="goHome()" class="flex flex-col items-center gap-1 w-16 text-blue-600 transition-colors">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
@@ -191,8 +198,8 @@
     </div>
 
     <!-- SIDEBAR MENU -->
-    <div id="sidebarOverlay" onclick="toggleSidebar()" class="hidden absolute top-0 left-0 w-full h-full bg-black/50 z-[99000] fade-in"></div>
-    <div id="sidebarMenu" class="hidden absolute top-0 left-0 w-3/4 max-w-xs h-full bg-white z-[99100] shadow-2xl flex flex-col border-r border-slate-100">
+    <div id="sidebarOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/50 z-sidebar-overlay fade-in hidden"></div>
+    <div id="sidebarMenu" class="fixed top-0 left-0 w-3/4 max-w-xs h-full bg-white z-sidebar shadow-2xl flex flex-col border-r border-slate-100 hidden">
         <div class="p-6 bg-white border-b border-slate-100 pt-16 flex items-center gap-4">
             <img src="SaddhaTrack_Logo.png" alt="Logo" class="w-12 h-12 object-contain" style="width: 48px; height: 48px;">
             <div>
@@ -215,10 +222,10 @@
         <div class="p-4 border-t border-slate-100" id="sidebarAuthArea"></div>
     </div>
 
-    <!-- VIEWS USING INLINE STYLES FOR MOBILE SAFETY -->
+    <!-- MAIN VIEWS -->
     
-    <!-- VIEW: PROFILE -->
-    <div id="profileView" class="fixed inset-0 bg-white flex-col fade-in z-[4100]" style="display: none;">
+    <!-- PROFILE -->
+    <div id="profileView" class="fixed inset-0 bg-white flex-col fade-in z-view hidden">
         <div class="bg-white p-4 pt-safe shadow-sm border-b border-slate-100 flex items-center justify-between shrink-0">
             <div class="flex items-center gap-3">
                 <button onclick="goHome()" class="text-slate-500 hover:text-blue-600 p-1"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg></button>
@@ -247,8 +254,8 @@
         </div>
     </div>
 
-    <!-- VIEW: CHANTS LIST -->
-    <div id="chantsView" class="fixed inset-0 bg-white flex-col fade-in z-[4200]" style="display: none;">
+    <!-- CHANTS -->
+    <div id="chantsView" class="fixed inset-0 bg-white flex-col fade-in z-view hidden">
         <div class="bg-white p-4 pt-safe shadow-sm border-b border-slate-100 flex items-center justify-between shrink-0">
             <div class="flex items-center gap-3">
                 <button onclick="goHome()" class="text-slate-500 hover:text-blue-600 p-1"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg></button>
@@ -258,10 +265,71 @@
         <div class="flex-1 overflow-y-auto p-4 space-y-4 pb-32" id="chantsContainer"></div>
     </div>
 
-    <!-- VIEW: DEITY DETAIL -->
-    <div id="deityView" class="fixed inset-0 bg-white flex-col fade-in z-[6000]" style="display: none;">
+    <!-- FORM (Record) -->
+    <div id="formView" class="fixed inset-0 bg-white flex-col fade-in z-view hidden">
+        <div class="bg-white p-4 pt-safe shadow-sm border-b border-slate-100 flex items-center justify-between shrink-0">
+            <div class="flex items-center gap-3">
+                <button onclick="goHome()" class="text-slate-500 hover:text-blue-600 p-1"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
+                <h2 class="text-lg font-bold text-slate-800">บันทึกข้อมูล</h2>
+            </div>
+        </div>
+        <div class="flex-1 overflow-y-auto p-6 pb-32">
+            <form id="prayerForm" class="space-y-6" onsubmit="savePrayer(event)">
+                <div class="bg-blue-50 p-5 rounded-3xl text-center border border-blue-100">
+                    <label class="text-xs text-blue-600 font-bold uppercase tracking-wide block mb-3">สถานที่ / สิ่งศักดิ์สิทธิ์</label>
+                    <input type="text" id="placeInput" required placeholder="ระบุชื่อสถานที่..." class="w-full text-center bg-white border border-blue-200 rounded-2xl p-4 text-slate-900 font-bold text-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 space-y-5">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">หมวดหมู่</label>
+                        <select id="type" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"><option value="work">💼 การงาน / ความสำเร็จ</option><option value="finance">💰 โชคลาภ / การเงิน</option><option value="love">❤️ ความรัก / คู่ครอง</option><option value="health">💪 สุขภาพ / รักษาโรค</option><option value="general">✨ ทั่วไป / คุ้มครอง</option></select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="col-span-2"><label class="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">เรื่องที่ขอพร</label><input type="text" id="title" required placeholder="เช่น ขอให้ยอดขายปัง..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"></div>
+                        <div class="col-span-2"><label class="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">วันที่ครบกำหนด</label><input type="date" id="deadline" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"></div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-4 border-t border-slate-100 pt-5">
+                        <div class="col-span-2"><label class="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">สิ่งที่บนบาน</label><input type="text" id="offeringItem" placeholder="เช่น ไข่ต้ม" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"></div>
+                        <div class="col-span-1"><label class="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">จำนวน</label><input type="text" id="offeringAmount" placeholder="99" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"></div>
+                    </div>
+                </div>
+                <button type="submit" id="saveButton" class="w-full bg-blue-600 text-white font-bold text-lg py-4 rounded-2xl shadow-xl shadow-blue-600/20 hover:scale-[1.02] active:scale-95 transition-all">บันทึกข้อมูล</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- PLACE INFO & REVIEWS -->
+    <div id="placeView" class="fixed inset-0 bg-white flex-col fade-in z-view hidden">
+        <div class="bg-white p-4 pt-safe shadow-sm border-b border-slate-100 flex items-center justify-between shrink-0">
+            <button onclick="goHome()" class="text-slate-500 hover:text-blue-600 p-1"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
+            <h2 class="text-lg font-bold text-slate-800">ข้อมูลสถานที่</h2>
+            <div class="w-6"></div>
+        </div>
+        <div class="flex-1 overflow-y-auto p-0 pb-32">
+            <div class="h-48 bg-blue-600 flex items-center justify-center relative overflow-hidden"><h1 class="text-6xl filter drop-shadow-lg">🏛️</h1></div>
+            <div class="p-6 -mt-10 relative">
+                <div class="bg-white rounded-3xl p-6 shadow-xl shadow-slate-200/50 mb-6 border border-slate-100 text-center">
+                    <h2 id="viewPlaceName" class="text-2xl font-bold text-slate-900 mb-2">...</h2>
+                    <div class="inline-block bg-orange-50 px-4 py-2 rounded-xl text-sm font-bold text-orange-600 mt-2 border border-orange-100">เด่นเรื่อง: <span id="viewPlaceFamous">...</span></div>
+                </div>
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wide">รีวิวจากผู้ศรัทธา</h3>
+                    <button onclick="openReviewForm()" class="text-xs bg-blue-600 text-white px-4 py-2 rounded-full font-bold hover:scale-105 active:scale-95 transition-all">เขียนรีวิว</button>
+                </div>
+                <div id="viewPlaceReviewsList" class="space-y-4"></div>
+            </div>
+        </div>
+        <div class="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-white via-white/90 to-transparent pointer-events-none pb-safe">
+            <button id="viewPlaceRecordBtn" class="pointer-events-auto w-full bg-blue-600 text-white py-4 rounded-2xl font-bold shadow-xl shadow-blue-600/20 hover:scale-[1.02] active:scale-95 transition-all text-lg">บันทึกการบนบาน</button>
+        </div>
+    </div>
+
+    <!-- SUB VIEWS (Overlaying Base Views) -->
+    
+    <!-- DEITY DETAIL -->
+    <div id="deityView" class="fixed inset-0 bg-white flex-col fade-in z-subview hidden">
         <div class="absolute top-0 left-0 w-full p-4 pt-safe flex items-center justify-between z-10 bg-gradient-to-b from-black/50 to-transparent">
-            <button onclick="closeView('deityView')" class="w-10 h-10 bg-white/20 backdrop-blur-md rounded-full text-white flex items-center justify-center hover:bg-white/40 transition-colors"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
+            <button onclick="closeSubView('deityView')" class="w-10 h-10 bg-white/20 backdrop-blur-md rounded-full text-white flex items-center justify-center hover:bg-white/40 transition-colors"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
         </div>
         <div class="flex-1 overflow-y-auto p-0 pb-32">
             <div class="h-72 overflow-hidden relative bg-slate-100">
@@ -284,18 +352,17 @@
                 </div>
                 <div class="bg-blue-50 p-6 rounded-3xl shadow-sm border border-blue-100 relative overflow-hidden">
                     <h3 class="text-xs font-bold text-blue-600 uppercase tracking-wide mb-3">บทสวดบูชา</h3>
-                    <!-- บทสวดตัดบรรทัด (whitespace-normal) -->
                     <p id="deityChant" class="text-lg text-slate-800 font-serif italic text-center py-4 leading-relaxed tracking-wide whitespace-normal break-words">...</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- VIEW: DETAIL VOW -->
-    <div id="detailView" class="fixed inset-0 bg-white flex-col fade-in z-[5000]" style="display: none;">
+    <!-- DETAIL VOW -->
+    <div id="detailView" class="fixed inset-0 bg-white flex-col fade-in z-subview hidden">
         <div class="bg-white p-4 pt-safe shadow-sm border-b border-slate-100 flex items-center justify-between shrink-0">
             <div class="flex items-center gap-3">
-                <button onclick="closeView('detailView')" class="text-slate-500 hover:text-blue-600 p-1"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
+                <button onclick="closeSubView('detailView')" class="text-slate-500 hover:text-blue-600 p-1"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
                 <h2 class="text-lg font-bold text-slate-800">รายละเอียดการบนบาน</h2>
             </div>
             <div class="flex gap-2">
@@ -345,69 +412,10 @@
         </div>
     </div>
 
-    <!-- VIEW: FORM (Record) -->
-    <div id="formView" class="fixed inset-0 bg-white flex-col fade-in z-[9000]" style="display: none;">
-        <div class="bg-white p-4 pt-safe shadow-sm border-b border-slate-100 flex items-center justify-between shrink-0">
-            <div class="flex items-center gap-3">
-                <button onclick="closeView('formView')" class="text-slate-500 hover:text-blue-600 p-1"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
-                <h2 class="text-lg font-bold text-slate-800">บันทึกข้อมูล</h2>
-            </div>
-        </div>
-        <div class="flex-1 overflow-y-auto p-6 pb-32">
-            <form id="prayerForm" class="space-y-6" onsubmit="savePrayer(event)">
-                <div class="bg-blue-50 p-5 rounded-3xl text-center border border-blue-100">
-                    <label class="text-xs text-blue-600 font-bold uppercase tracking-wide block mb-3">สถานที่ / สิ่งศักดิ์สิทธิ์</label>
-                    <input type="text" id="placeInput" required placeholder="ระบุชื่อสถานที่..." class="w-full text-center bg-white border border-blue-200 rounded-2xl p-4 text-slate-900 font-bold text-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-                <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 space-y-5">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">หมวดหมู่</label>
-                        <select id="type" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"><option value="work">💼 การงาน / ความสำเร็จ</option><option value="finance">💰 โชคลาภ / การเงิน</option><option value="love">❤️ ความรัก / คู่ครอง</option><option value="health">💪 สุขภาพ / รักษาโรค</option><option value="general">✨ ทั่วไป / คุ้มครอง</option></select>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="col-span-2"><label class="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">เรื่องที่ขอพร</label><input type="text" id="title" required placeholder="เช่น ขอให้ยอดขายปัง..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"></div>
-                        <div class="col-span-2"><label class="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">วันที่ครบกำหนด</label><input type="date" id="deadline" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"></div>
-                    </div>
-                    <div class="grid grid-cols-3 gap-4 border-t border-slate-100 pt-5">
-                        <div class="col-span-2"><label class="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">สิ่งที่บนบาน</label><input type="text" id="offeringItem" placeholder="เช่น ไข่ต้ม" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"></div>
-                        <div class="col-span-1"><label class="block text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">จำนวน</label><input type="text" id="offeringAmount" placeholder="99" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"></div>
-                    </div>
-                </div>
-                <button type="submit" id="saveButton" class="w-full bg-blue-600 text-white font-bold text-lg py-4 rounded-2xl shadow-xl shadow-blue-600/20 hover:scale-[1.02] active:scale-95 transition-all">บันทึกข้อมูล</button>
-            </form>
-        </div>
-    </div>
-    
-    <!-- VIEW: PLACE INFO & REVIEWS -->
-    <div id="placeView" class="fixed inset-0 bg-white flex-col fade-in z-[7000]" style="display: none;">
-        <div class="bg-white p-4 pt-safe shadow-sm border-b border-slate-100 flex items-center justify-between shrink-0">
-            <button onclick="closePlacePreview()" class="text-slate-500 hover:text-blue-600 p-1"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
-            <h2 class="text-lg font-bold text-slate-800">ข้อมูลสถานที่</h2>
-            <div class="w-6"></div>
-        </div>
-        <div class="flex-1 overflow-y-auto p-0 pb-32">
-            <div class="h-48 bg-blue-600 flex items-center justify-center relative overflow-hidden"><h1 class="text-6xl filter drop-shadow-lg">🏛️</h1></div>
-            <div class="p-6 -mt-10 relative">
-                <div class="bg-white rounded-3xl p-6 shadow-xl shadow-slate-200/50 mb-6 border border-slate-100 text-center">
-                    <h2 id="viewPlaceName" class="text-2xl font-bold text-slate-900 mb-2">...</h2>
-                    <div class="inline-block bg-orange-50 px-4 py-2 rounded-xl text-sm font-bold text-orange-600 mt-2 border border-orange-100">เด่นเรื่อง: <span id="viewPlaceFamous">...</span></div>
-                </div>
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wide">รีวิวจากผู้ศรัทธา</h3>
-                    <button onclick="openReviewForm()" class="text-xs bg-blue-600 text-white px-4 py-2 rounded-full font-bold hover:scale-105 active:scale-95 transition-all">เขียนรีวิว</button>
-                </div>
-                <div id="viewPlaceReviewsList" class="space-y-4"></div>
-            </div>
-        </div>
-        <div class="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-white via-white/90 to-transparent pointer-events-none pb-safe">
-            <button id="viewPlaceRecordBtn" class="pointer-events-auto w-full bg-blue-600 text-white py-4 rounded-2xl font-bold shadow-xl shadow-blue-600/20 hover:scale-[1.02] active:scale-95 transition-all text-lg">บันทึกการบนบาน</button>
-        </div>
-    </div>
-
-    <!-- VIEW: REVIEW FORM OVERLAY -->
-    <div id="reviewFormView" class="fixed inset-0 bg-black/60 backdrop-blur-sm items-end sm:items-center justify-center fade-in z-[8000]" style="display: none;">
+    <!-- REVIEW FORM OVERLAY (Modal) -->
+    <div id="reviewFormView" class="fixed inset-0 bg-black/60 backdrop-blur-sm items-end sm:items-center justify-center fade-in z-modal hidden">
         <div class="bg-white w-full sm:w-96 rounded-t-[2rem] sm:rounded-3xl p-8 shadow-2xl relative">
-            <button onclick="closeView('reviewFormView')" class="absolute top-6 right-6 text-slate-300 hover:text-slate-900 transition-colors bg-slate-50 rounded-full p-1"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+            <button onclick="closeSubView('reviewFormView')" class="absolute top-6 right-6 text-slate-400 hover:text-slate-900 transition-colors bg-slate-50 rounded-full p-1"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
             <h3 class="text-xl font-bold text-blue-600 mb-2">เขียนรีวิวสถานที่</h3>
             <p id="reviewPlaceNameTarget" class="text-sm text-slate-500 mb-6 font-medium">...</p>
             <div class="flex justify-center gap-2 mb-6">
@@ -438,7 +446,6 @@
         let tempReviewRating = 0;
         let currentPlaceName = "";
         
-        // DEITY DATA
         const deitiesData = [
             { id: 1, name: "พระพิฆเนศ", desc: "เทพแห่งความสำเร็จ ขจัดอุปสรรค", text: "โอม ศรี คเณศายะ นะมะฮา", offer: "นมสด, น้ำแดง, ขนมลาดู, ดอกดาวเรือง", img: "https://upload.wikimedia.org/wikipedia/commons/c/c2/Ganesha_Basohli_miniature_circa_1730_Dubost_p73.jpg" },
             { id: 2, name: "พระแม่ลักษมี", desc: "มหาเทวีแห่งความร่ำรวย ความรัก", text: "โอม ชยะ ศรี ลักษมี มาตา", offer: "ดอกบัวสีชมพู, นมสด, ขนมหวาน", img: "https://upload.wikimedia.org/wikipedia/commons/e/e6/Raja_Ravi_Varma_-_Goddess_Lakshmi.jpg" },
@@ -461,25 +468,64 @@
         const categoryLabels = { 'work': 'การงาน / ความสำเร็จ', 'finance': 'โชคลาภ / การเงิน', 'love': 'ความรัก / คู่ครอง', 'health': 'สุขภาพ / รักษาโรค', 'general': 'ทั่วไป / คุ้มครอง' };
         const blueIcon = L.divIcon({ className: 'custom-div-icon', html: `<div style="background-color: white; width: 14px; height: 14px; border-radius: 50%; border: 4px solid #3b82f6; box-shadow: 0 4px 6px rgba(0,0,0,0.3);"></div>`, iconSize: [16, 16], iconAnchor: [8, 8] });
 
-        // --- NAVIGATION LOGIC ---
+        const BASE_VIEWS = ['profileView', 'chantsView', 'formView', 'placeView'];
+        const SUB_VIEWS = ['detailView', 'deityView', 'reviewFormView'];
+
+        // --- VIEW MANAGEMENT LOGIC ---
+        function showBaseView(viewId) {
+            [...BASE_VIEWS, ...SUB_VIEWS].forEach(id => {
+                const el = document.getElementById(id);
+                if(el) { el.classList.add('hidden'); el.classList.remove('flex'); }
+            });
+            if(viewId) {
+                const el = document.getElementById(viewId);
+                if(el) { el.classList.remove('hidden'); el.classList.add('flex'); }
+            }
+            checkNavState();
+        }
+
+        function showSubView(viewId) {
+            if(viewId) {
+                const el = document.getElementById(viewId);
+                if(el) { el.classList.remove('hidden'); el.classList.add('flex'); }
+            }
+            checkNavState();
+        }
+
+        function closeSubView(id) {
+            const el = document.getElementById(id);
+            if(el) { el.classList.add('hidden'); el.classList.remove('flex'); }
+            checkNavState();
+        }
+
+        function setNavState(isHome) {
+            const inner = document.getElementById('bottomNavInner');
+            if (isHome) {
+                inner.className = "pointer-events-auto bg-white/95 backdrop-blur-xl flex justify-between items-center relative transition-all duration-300 mx-6 mb-6 rounded-[2rem] border border-slate-100 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.15)] px-6 py-3";
+            } else {
+                inner.className = "pointer-events-auto bg-white/95 backdrop-blur-xl flex justify-between items-center relative transition-all duration-300 mx-0 mb-0 rounded-t-[2rem] border-t border-slate-200 shadow-[0_-10px_40px_-10px_rgba(0,0,0,0.05)] px-8 py-4";
+            }
+        }
+
         function updateNavActive(activeId) {
-            const btns = {
-                'home': document.getElementById('nav-home'),
-                'chants': document.getElementById('nav-chants'),
-                'profile': document.getElementById('nav-profile'),
-                'menu': document.getElementById('nav-menu')
-            };
+            const btns = { 'home': document.getElementById('nav-home'), 'chants': document.getElementById('nav-chants'), 'profile': document.getElementById('nav-profile'), 'menu': document.getElementById('nav-menu') };
             for(let key in btns) {
                 if(btns[key]) {
                     if(key === activeId) {
-                        btns[key].classList.remove('text-slate-400');
-                        btns[key].classList.add('text-blue-600'); 
+                        btns[key].classList.remove('text-slate-400', 'text-orange-500'); btns[key].classList.add('text-blue-600'); 
+                        btns[key].querySelector('span').classList.remove('font-medium', 'text-slate-400', 'text-blue-600'); btns[key].querySelector('span').classList.add('font-bold', 'text-orange-500'); 
                     } else {
-                        btns[key].classList.remove('text-blue-600');
-                        btns[key].classList.add('text-slate-400');
+                        btns[key].classList.remove('text-blue-600', 'text-orange-500'); btns[key].classList.add('text-slate-400');
+                        btns[key].querySelector('span').classList.remove('font-bold', 'text-orange-500', 'text-blue-600'); btns[key].querySelector('span').classList.add('font-medium', 'text-slate-400');
                     }
                 }
             }
+        }
+
+        function checkNavState() {
+            const views = [...BASE_VIEWS, ...SUB_VIEWS];
+            const isAnyViewOpen = views.some(id => !document.getElementById(id).classList.contains('hidden'));
+            setNavState(!isAnyViewOpen);
         }
 
         // --- INIT SYSTEM ---
@@ -495,32 +541,20 @@
             const area = document.getElementById('sidebarAuthArea');
             if (currentUser) {
                 document.getElementById('greetingName').innerText = `${currentUser.name}`; 
-                area.innerHTML = `
-                    <button onclick="logout()" class="w-full text-left px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 font-bold flex items-center gap-3 transition-colors">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg> ออกจากระบบ
-                    </button>
-                `;
+                area.innerHTML = `<button onclick="logout()" class="w-full text-left px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 font-bold flex items-center gap-3 transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg> ออกจากระบบ</button>`;
             } else {
                 document.getElementById('greetingName').innerText = `ผู้ใช้งานทั่วไป`;
-                area.innerHTML = `
-                    <button onclick="openAuth()" class="w-full text-left px-4 py-3 rounded-xl text-blue-600 bg-blue-50 font-bold flex items-center gap-3 transition-colors hover:bg-blue-100">
-                        เข้าสู่ระบบ / สมัครสมาชิก
-                    </button>
-                `;
+                area.innerHTML = `<button onclick="openAuth()" class="w-full text-left px-4 py-3 rounded-xl text-blue-600 bg-blue-50 font-bold flex items-center gap-3 transition-colors hover:bg-blue-100">เข้าสู่ระบบ / สมัครสมาชิก</button>`;
             }
         }
 
-        function openAuth() { document.getElementById('authView').style.display = 'flex'; }
-        function closeAuth() { document.getElementById('authView').style.display = 'none'; }
+        function openAuth() { const el = document.getElementById('authView'); el.classList.remove('hidden'); el.classList.add('flex'); }
+        function closeAuth() { const el = document.getElementById('authView'); el.classList.add('hidden'); el.classList.remove('flex'); }
 
         function toggleAuthMode() {
-            const loginForm = document.getElementById('loginForm');
-            const regForm = document.getElementById('registerForm');
-            if(loginForm.classList.contains('hidden')) {
-                loginForm.classList.remove('hidden'); regForm.classList.add('hidden');
-            } else {
-                loginForm.classList.add('hidden'); regForm.classList.remove('hidden');
-            }
+            const loginForm = document.getElementById('loginForm'); const regForm = document.getElementById('registerForm');
+            if(loginForm.classList.contains('hidden')) { loginForm.classList.remove('hidden'); regForm.classList.add('hidden'); } 
+            else { loginForm.classList.add('hidden'); regForm.classList.remove('hidden'); }
         }
 
         async function handleAuth(event, type) {
@@ -531,26 +565,19 @@
 
             const payload = { action: type };
             if(type === 'login') {
-                payload.username = document.getElementById('loginUser').value;
-                payload.password = document.getElementById('loginPass').value;
+                payload.username = document.getElementById('loginUser').value; payload.password = document.getElementById('loginPass').value;
             } else {
-                const pass = document.getElementById('regPass').value;
-                const confirmPass = document.getElementById('regPassConfirm').value;
-                
+                const pass = document.getElementById('regPass').value; const confirmPass = document.getElementById('regPassConfirm').value;
                 if (pass !== confirmPass) { alert("รหัสผ่านไม่ตรงกัน กรุณาตรวจสอบอีกครั้ง"); btn.innerText = originalText; btn.disabled = false; return; }
-                payload.name = document.getElementById('regName').value;
-                payload.username = document.getElementById('regUser').value;
-                payload.password = pass;
+                payload.name = document.getElementById('regName').value; payload.username = document.getElementById('regUser').value; payload.password = pass;
             }
 
             try {
                 const response = await fetch(API_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload) });
                 const result = await response.json();
-                
                 if(result.status === "success") {
                     const userData = { name: result.name, username: result.username };
-                    localStorage.setItem('saddha_user', JSON.stringify(userData)); currentUser = userData;
-                    updateSidebarAuth();
+                    localStorage.setItem('saddha_user', JSON.stringify(userData)); currentUser = userData; updateSidebarAuth();
                     document.getElementById('authView').classList.add('fade-out');
                     setTimeout(() => { closeAuth(); document.getElementById('authView').classList.remove('fade-out'); goHome(); }, 400);
                 } else { alert("❌ ข้อผิดพลาด: " + result.message); }
@@ -565,9 +592,7 @@
             map = L.map('map', { zoomControl: false }).setView([13.7563, 100.5018], 14);
             L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '© OpenStreetMap' }).addTo(map);
             templeMarkers = L.layerGroup().addTo(map);
-            
             map.on('dragend', () => { document.getElementById('searchAreaBtn').classList.remove('hidden'); });
-            
             initGPS(false);
             loadTemplesNearby(13.7563, 100.5018); // Default BKK
         }
@@ -600,7 +625,7 @@
         }
 
         async function loadTemplesNearby(lat, lng) {
-            const query = `[out:json][timeout:15];(node["amenity"="place_of_worship"](around:5000, ${lat}, ${lng});way["amenity"="place_of_worship"](around:5000, ${lat}, ${lng}););out center;`;
+            const query = `[out:json][timeout:10];(node["amenity"="place_of_worship"](around:3000, ${lat}, ${lng});way["amenity"="place_of_worship"](around:3000, ${lat}, ${lng}););out center;`;
             try {
                 const response = await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`);
                 if (!response.ok) throw new Error('API Error');
@@ -608,7 +633,6 @@
                 let templesToSave = [];
                 if (data.elements) {
                     data.elements.forEach(element => {
-                        // ดึงชื่อภาษาไทยก่อน ถ้าไม่มีดึงภาษาอังกฤษ ถ้าไม่มีอีกให้ดึงชื่อท้องถิ่น
                         const name = element.tags['name:th'] || element.tags['name:en'] || element.tags.name;
                         if ((element.lat || element.center) && name) templesToSave.push({ lat: element.lat || element.center.lat, lng: element.lon || element.center.lon, name: name });
                     });
@@ -623,7 +647,7 @@
                 console.error(err);
                 const searchBtn = document.getElementById('searchAreaBtn');
                 if (searchBtn) {
-                    searchBtn.innerHTML = "เซิร์ฟเวอร์โหลดข้อมูลไม่ทัน กรุณาลองใหม่";
+                    searchBtn.innerHTML = "เซิร์ฟเวอร์หน่วง กรุณาลองใหม่";
                     searchBtn.classList.remove('hidden');
                     setTimeout(() => { searchBtn.innerHTML = "ค้นหาบริเวณนี้"; }, 3000);
                 }
@@ -693,7 +717,6 @@
             clearTimeout(searchTimeout); document.getElementById('searchStatus').innerHTML = '<div class="w-4 h-4 border-2 border-slate-300 border-t-blue-600 rounded-full animate-spin"></div>';
             searchTimeout = setTimeout(async () => {
                 try {
-                    // ลบ countrycodes=th ออก เพื่อให้ค้นหาทั่วโลกได้
                     const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&accept-language=th,en`;
                     const res = await fetch(url); const results = await res.json();
                     list.innerHTML = '';
@@ -702,7 +725,37 @@
                 } finally { document.getElementById('searchStatus').innerHTML = ""; }
             }, 500);
         }
-        function selectSearchResult(lat, lon, name) { document.getElementById('suggestionList').classList.add('hidden'); document.getElementById('searchInput').value = name; map.flyTo([lat, lon], 16, { duration: 1.5 }); document.getElementById('searchAreaBtn').classList.remove('hidden'); }
+
+        // ==========================================
+        // 🔴 แก้ไขระบบค้นหาสถานที่ (หมุดสีส้มแสดง Popup ข้อมูลทันที) 🔴
+        // ==========================================
+        function selectSearchResult(lat, lon, name) { 
+            document.getElementById('suggestionList').classList.add('hidden'); 
+            document.getElementById('searchInput').value = name; 
+            
+            // ลบหมุดเดิมและสร้างหมุดส้มใหม่
+            if (userMarker) map.removeLayer(userMarker);
+            const userIcon = L.divIcon({ className: 'css-icon', html: '<div class="gps-ring"></div><div style="background-color:#f97316; width:12px; height:12px; border-radius:50%; border:2px solid white; box-shadow:0 0 5px rgba(249,115,22,0.5);"></div>', iconSize: [20, 20], iconAnchor: [10, 10] });
+            userMarker = L.marker([lat, lon], {icon: userIcon}).addTo(map);
+            
+            // เพิ่ม Popup ข้อมูลสถานที่เข้าไปที่หมุดสีส้ม
+            const mock = getMockRating(name);
+            userMarker.bindPopup(`
+                <div class="p-4 w-[220px] text-center">
+                    <h3 class="font-bold text-slate-900 text-lg mb-2">${name}</h3>
+                    <div class="mb-4"><span class="bg-blue-50 text-blue-600 text-[10px] px-3 py-1 rounded-lg font-bold">🔥 เด่น: ${mock.famous}</span></div>
+                    <button onclick="openPlacePreview('${name}')" class="w-full bg-blue-600 text-white py-2 rounded-xl text-xs font-bold hover:scale-105 active:scale-95 transition-all pointer-events-auto">ดูข้อมูลเพิ่มเติม</button>
+                </div>
+            `, { autoPan: true, autoPanPaddingTopLeft: [20, 160], autoPanPaddingBottomRight: [20, 80] }).openPopup();
+            
+            map.flyTo([lat, lon], 16, { duration: 1.5 }); 
+            document.getElementById('searchAreaBtn').classList.add('hidden');
+            
+            // สั่งโหลดสถานที่รอบๆ เผื่อไว้ให้เห็นหมุดน้ำเงินข้างๆ
+            setTimeout(() => loadTemplesNearby(lat, lon), 1500); 
+            
+            goHome();
+        }
 
         function toggleSidebar() { 
             const sb = document.getElementById('sidebarMenu'); 
@@ -717,29 +770,25 @@
         function goHome() { 
             const sb = document.getElementById('sidebarMenu'); const ol = document.getElementById('sidebarOverlay');
             if (!sb.classList.contains('hidden')) { sb.classList.remove('slide-in'); sb.classList.add('slide-out'); setTimeout(() => sb.classList.add('hidden'), 300); ol.classList.add('hidden'); }
-            const views = document.querySelectorAll('.z-view'); views.forEach(v => { v.classList.remove('active', 'flex'); v.classList.add('hidden'); });
-            if(userMarker) map.setView(userMarker.getLatLng(), 16); setTimeout(() => map.invalidateSize(), 300);
+            
+            showBaseView(null);
+            setTimeout(() => map.invalidateSize(), 300);
             updateNavActive('home'); 
         }
 
-        function closeView(id) { 
-            document.getElementById(id).style.display = 'none'; 
-            if(id === 'placeView') setTimeout(() => map.invalidateSize(), 300); 
-        }
-        
         function openForm(placeName, isManual) {
             if (!currentUser) { openAuth(); return; }
             goHome(); 
             const placeInput = document.getElementById('placeInput');
             if (isManual) { placeInput.value = ""; placeInput.readOnly = false; placeInput.classList.remove('bg-slate-100', 'text-slate-500'); placeInput.classList.add('bg-white', 'text-slate-900'); placeInput.focus(); } 
             else { placeInput.value = placeName; placeInput.readOnly = true; placeInput.classList.add('bg-slate-100', 'text-slate-500'); placeInput.classList.remove('bg-white'); }
-            document.getElementById('prayerForm').reset(); document.getElementById('formView').style.display = 'flex';
+            document.getElementById('prayerForm').reset(); showBaseView('formView');
             if (!isManual) placeInput.value = placeName;
             updateNavActive('');
         }
 
         function closePlacePreview() {
-            closeView('placeView');
+            closeSubView('placeView');
         }
 
         // --- PLACE REVIEWS LOGIC ---
@@ -787,10 +836,9 @@
             const newBtn = document.createElement('button'); newBtn.id = 'viewPlaceRecordBtn'; newBtn.className = 'pointer-events-auto w-full bg-blue-600 text-white py-4 rounded-2xl font-bold shadow-xl shadow-blue-600/20 hover:scale-[1.02] active:scale-95 transition-all text-lg'; newBtn.innerHTML = 'บันทึกการบนบาน'; newBtn.onclick = function() { openForm(name, false); };
             btnContainer.replaceChild(newBtn, document.getElementById('viewPlaceRecordBtn'));
 
-            document.getElementById('placeView').style.display = 'flex';
+            showBaseView('placeView');
         }
 
-        // --- API SAVING (Send Prayer to Sheet) ---
         async function savePrayer(event) {
             event.preventDefault();
             const btn = document.getElementById('saveButton'); const origText = btn.innerText;
@@ -813,11 +861,7 @@
 
             try {
                 const payload = { ...newItem, action: "save_prayer", user: currentUser.username };
-                await fetch(API_URL, { 
-                    method: "POST", 
-                    headers: { "Content-Type": "text/plain;charset=utf-8" },
-                    body: JSON.stringify(payload) 
-                });
+                await fetch(API_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload) });
             } catch(e) { console.error("Cloud Save Failed", e); }
 
             btn.innerText = origText; btn.disabled = false;
@@ -827,8 +871,7 @@
         function openProfile() { 
             if (!currentUser) { openAuth(); return; }
             goHome(); try { prayers = JSON.parse(localStorage.getItem('saddha_prayers')) || []; } catch(e) { prayers = []; } 
-            renderPrayerList(); document.getElementById('profileView').style.display = 'flex'; 
-            updateNavActive('profile'); 
+            renderPrayerList(); showBaseView('profileView'); updateNavActive('profile'); 
         }
         
         function renderPrayerList() {
@@ -864,7 +907,7 @@
             if (item.status === 'pending') { actionsDiv.innerHTML = `<div class="grid grid-cols-2 gap-3"><button onclick="markStatus('success')" class="bg-blue-600 text-white py-3 rounded-xl font-bold shadow-lg hover:scale-105 active:scale-95 transition-all">✅ สำเร็จ</button><button onclick="markStatus('fail')" class="bg-white border border-slate-200 text-slate-700 py-3 rounded-xl font-bold hover:bg-slate-50 transition-colors">❌ ไม่สำเร็จ</button></div>`; } 
             else if (item.status === 'waiting_vow') { actionsDiv.innerHTML = `<div class="p-4 bg-orange-50 text-orange-600 rounded-2xl text-center font-bold">🙏 รอแก้บน</div>`; } 
             else { actionsDiv.innerHTML = `<div class="p-4 bg-slate-100 text-slate-500 rounded-2xl text-center font-bold">จบรายการแล้ว</div>`; }
-            document.getElementById('detailView').style.display = 'flex'; 
+            showSubView('detailView');
         }
         function markStatus(s) { const item = prayers.find(p => p.id === currentDetailId); if(!item) return; item.status = s === 'success' ? 'waiting_vow' : 'fail'; localStorage.setItem('saddha_prayers', JSON.stringify(prayers)); alert("บันทึกสถานะเรียบร้อย"); openProfile(); }
 
@@ -887,7 +930,7 @@
                     </div>
                 `; container.appendChild(el); 
             });
-            document.getElementById('chantsView').style.display = 'flex'; updateNavActive('chants');
+            showBaseView('chantsView'); updateNavActive('chants');
         }
 
         function toggleFavorite(event, id) {
@@ -896,9 +939,9 @@
             if (index > -1) favorites.splice(index, 1); else favorites.push(id);
             localStorage.setItem('saddha_favorites', JSON.stringify(favorites));
             
-            if(document.getElementById('deityView').style.display === 'flex') { openDeityDetail(id); } 
-            else if(document.getElementById('chantsView').style.display === 'flex') { openChants(); } 
-            else if(document.getElementById('profileView').style.display === 'flex') { openProfile(); }
+            if(!document.getElementById('deityView').classList.contains('hidden')) { openDeityDetail(id); } 
+            else if(!document.getElementById('chantsView').classList.contains('hidden')) { openChants(); } 
+            else if(!document.getElementById('profileView').classList.contains('hidden')) { openProfile(); }
         }
 
         function openDeityDetail(id) {
@@ -909,18 +952,17 @@
             const btn = document.getElementById('deityFavBtn');
             btn.className = `p-2.5 rounded-full bg-slate-50 shadow-inner border border-slate-100 heart-icon ${isFav ? 'text-red-500' : 'text-slate-300'}`;
             btn.onclick = () => { toggleFavorite(null, id); }; 
-
-            document.getElementById('deityView').style.display = 'flex'; 
+            showSubView('deityView');
         }
         
         function toggleEditMode() {} function deleteCurrentItem() { if(!currentDetailId) return; if(confirm("ลบรายการนี้?")) { prayers = prayers.filter(p => p.id !== currentDetailId); localStorage.setItem('saddha_prayers', JSON.stringify(prayers)); openProfile(); } }
         function openReviewForm() { 
             if (!currentUser) { openAuth(); return; }
             document.getElementById('reviewPlaceNameTarget').innerText = `รีวิว: ${currentPlaceName}`; document.getElementById('reviewText').value = ""; setReviewRating(5); 
-            document.getElementById('reviewFormView').style.display = 'flex';
+            showSubView('reviewFormView');
         }
         function setReviewRating(n) { tempReviewRating = n; const stars = document.querySelectorAll('.review-star'); stars.forEach((star, index) => { if (index < n) { star.classList.remove('inactive'); star.classList.add('active'); } else { star.classList.remove('active'); star.classList.add('inactive'); } }); }
-        function submitReview() { const text = document.getElementById('reviewText').value; if(!text) { alert("กรุณาเขียนรีวิวสั้นๆ ก่อนส่งครับ"); return; } const reviews = JSON.parse(localStorage.getItem('saddha_place_reviews')) || {}; if (!reviews[currentPlaceName]) reviews[currentPlaceName] = []; reviews[currentPlaceName].unshift({ user: currentUser.name, rating: tempReviewRating, text: text, date: new Date().toLocaleDateString('th-TH') }); localStorage.setItem('saddha_place_reviews', JSON.stringify(reviews)); closeView('reviewFormView'); openPlacePreview(currentPlaceName); alert("ขอบคุณสำหรับรีวิวครับ 🙏"); }
+        function submitReview() { const text = document.getElementById('reviewText').value; if(!text) { alert("กรุณาเขียนรีวิวสั้นๆ ก่อนส่งครับ"); return; } const reviews = JSON.parse(localStorage.getItem('saddha_place_reviews')) || {}; if (!reviews[currentPlaceName]) reviews[currentPlaceName] = []; reviews[currentPlaceName].unshift({ user: currentUser.name, rating: tempReviewRating, text: text, date: new Date().toLocaleDateString('th-TH') }); localStorage.setItem('saddha_place_reviews', JSON.stringify(reviews)); closeSubView('reviewFormView'); openPlacePreview(currentPlaceName); alert("ขอบคุณสำหรับรีวิวครับ 🙏"); }
         function toggleNotification() { const item = prayers.find(p => p.id === currentDetailId); if (!item) return; item.notificationsEnabled = document.getElementById('notifToggle').checked; saveData(); }
         function saveNotificationDate() { const item = prayers.find(p => p.id === currentDetailId); if (!item) return; item.customNotificationDate = document.getElementById('customNotifDate').value; saveData(); }
         function setTempRating(n) { tempRating = n; renderStars(n); }
