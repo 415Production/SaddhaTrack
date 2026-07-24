@@ -2,22 +2,41 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ศรัทแทรค SaddhaTrack V8.4</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>ศรัทแทรค SaddhaTrack V8.5</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
-        body { font-family: 'Sarabun', sans-serif; touch-action: manipulation; -webkit-tap-highlight-color: transparent; background-color: #ffffff; }
+        
+        /* --- MOBILE APP FEEL: Prevent Pull-to-Refresh & Browser Bounce --- */
+        html, body {
+            font-family: 'Sarabun', sans-serif;
+            width: 100%;
+            height: 100%;
+            position: fixed;
+            overflow: hidden;
+            background-color: #ffffff;
+            touch-action: none; /* Prevent browser handling gestures on root */
+            -webkit-tap-highlight-color: transparent;
+            overscroll-behavior-y: none;
+        }
+
+        /* Allow internal scrolling areas */
+        .overflow-y-auto, .overflow-x-auto {
+            touch-action: auto;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior-y: contain;
+        }
         
         .pt-safe { padding-top: env(safe-area-inset-top, 24px); }
         .pb-safe { padding-bottom: env(safe-area-inset-bottom, 24px); }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        .nav-float { box-shadow: 0 20px 40px -10px rgba(0,0,0,0.10); }
+        .nav-float { box-shadow: 0 20px 40px -10px rgba(0,0,0,0.15); }
         .leaflet-control-zoom { display: none !important; }
         .leaflet-popup-content-wrapper { border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); padding: 0; overflow: hidden; }
         .leaflet-popup-content { margin: 0; width: 260px !important; }
@@ -69,15 +88,19 @@
         .filter-chip.active { background-color: white !important; color: #2563eb !important; border-color: white !important; font-weight: 800; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
     </style>
 </head>
-<body class="h-screen w-screen overflow-hidden text-slate-800 relative bg-white">
+<body class="relative bg-white">
 
-    <!-- AUTH VIEW (LOGIN / REGISTER) - White Theme -->
-    <div id="authView" class="fixed inset-0 bg-white flex flex-col items-center justify-center z-[99999]">
+    <!-- AUTH VIEW (LOGIN / REGISTER) -->
+    <div id="authView" class="fixed inset-0 bg-white flex flex-col items-center justify-center z-[99999] hidden">
+        <button onclick="closeAuth()" class="absolute top-6 right-6 text-slate-400 hover:text-slate-900 bg-slate-50 rounded-full p-2 transition-colors z-20">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+        
         <div class="bg-white p-8 rounded-[2.5rem] w-11/12 max-w-sm relative z-10 fade-in">
             <div class="text-center mb-8">
                 <!-- LOGO INSERTED HERE -->
                 <img src="SaddhaTrack_Logo.png" alt="SaddhaTrack Logo" class="w-32 h-32 mx-auto mb-4 object-contain rounded-3xl shadow-sm">
-                <p class="text-slate-500 text-sm mt-2 font-medium">เพราะศรัทธา... ติดตามผลได้</p>
+                <p class="text-slate-500 text-sm mt-2 font-medium">เข้าสู่ระบบเพื่อบันทึกข้อมูลของคุณ</p>
             </div>
 
             <!-- Login Form -->
@@ -95,13 +118,14 @@
             <!-- Register Form -->
             <form id="registerForm" onsubmit="handleAuth(event, 'register')" class="space-y-4 hidden">
                 <div>
-                    <input type="text" id="regName" required placeholder="ชื่อของคุณ (แสดงในแอป)" class="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl p-4 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-400 transition-all">
+                    <input type="text" id="regName" required placeholder="ชื่อของคุณ (แสดงในแอป)" class="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-400 transition-all">
                 </div>
                 <div>
-                    <input type="text" id="regUser" required placeholder="ชื่อผู้ใช้งาน (Username)" class="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl p-4 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-400 transition-all">
+                    <input type="text" id="regUser" required placeholder="ชื่อผู้ใช้งาน (Username)" class="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-400 transition-all">
                 </div>
-                <div>
-                    <input type="password" id="regPass" required placeholder="รหัสผ่าน (Password)" class="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl p-4 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-400 transition-all">
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="password" id="regPass" required placeholder="รหัสผ่าน" class="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-400 transition-all text-sm">
+                    <input type="password" id="regPassConfirm" required placeholder="ยืนยันรหัสผ่าน" class="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-400 transition-all text-sm">
                 </div>
                 <button type="submit" id="regBtn" class="w-full bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-bold text-lg py-4 rounded-2xl shadow-xl shadow-blue-500/20 hover:scale-[1.02] active:scale-95 transition-all mt-4">สมัครสมาชิก</button>
                 <p class="text-center text-slate-500 text-sm mt-4">มีบัญชีอยู่แล้ว? <span onclick="toggleAuthMode()" class="text-blue-600 font-bold cursor-pointer hover:underline">เข้าสู่ระบบ</span></p>
@@ -118,8 +142,8 @@
     <div class="absolute top-0 left-0 w-full z-header pt-safe bg-gradient-to-b from-white via-white/90 to-transparent backdrop-blur-md pb-6 pointer-events-none">
         <div class="px-6 flex justify-between items-center pointer-events-auto mt-2">
             <div>
-                <p class="text-[11px] text-slate-500 font-medium tracking-wide uppercase mb-0.5">ยินดีต้อนรับกลับมา</p>
-                <h1 id="greetingName" class="text-2xl font-bold text-slate-900 tracking-tight">ผู้ใช้งาน</h1>
+                <p class="text-[11px] text-slate-500 font-medium tracking-wide uppercase mb-0.5">ยินดีต้อนรับ</p>
+                <h1 id="greetingName" class="text-2xl font-bold text-slate-900 tracking-tight">ผู้ใช้งานทั่วไป</h1>
             </div>
             <button onclick="openProfile()" class="w-11 h-11 rounded-full bg-white border border-slate-200 shadow-sm flex items-center justify-center overflow-hidden hover:ring-2 hover:ring-slate-300 transition-all">
                 <svg class="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
@@ -165,7 +189,6 @@
     <div class="absolute bottom-6 left-0 w-full z-[2000] px-6 pb-safe pointer-events-none">
         <div class="nav-float bg-white/95 backdrop-blur-xl border border-slate-100 rounded-[2rem] px-6 py-3 flex justify-between items-center pointer-events-auto relative">
             <button onclick="goHome()" class="flex flex-col items-center gap-1 w-16 text-slate-900 transition-colors">
-                <!-- Clean Outline House SVG -->
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
                 <span class="text-[10px] font-bold">แผนที่</span>
             </button>
@@ -174,6 +197,7 @@
                 <span class="text-[10px] font-medium">บทสวด</span>
             </button>
             <div class="absolute left-1/2 -translate-x-1/2 -top-6">
+                <!-- กดปุ่มบวก จะเช็กว่า Login หรือยัง -->
                 <button onclick="openForm(null, true)" class="w-14 h-14 bg-slate-900 rounded-full flex items-center justify-center text-white shadow-xl shadow-slate-900/30 hover:scale-105 active:scale-95 transition-all border-4 border-white">
                     <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                 </button>
@@ -194,11 +218,10 @@
     <div id="sidebarOverlay" onclick="toggleSidebar()" class="hidden absolute top-0 left-0 w-full h-full bg-black/50 z-sidebar-overlay fade-in"></div>
     <div id="sidebarMenu" class="hidden absolute top-0 left-0 w-3/4 max-w-xs h-full bg-white z-sidebar shadow-2xl flex flex-col border-r border-slate-100">
         <div class="p-6 bg-white border-b border-slate-100 pt-16 flex items-center gap-4">
-            <!-- LOGO IN SIDEBAR -->
             <img src="SaddhaTrack_Logo.png" alt="Logo" class="w-12 h-12 object-contain rounded-xl border border-slate-100 shadow-sm">
             <div>
                 <h2 class="text-xl font-bold text-slate-900">ศรัทแทรค</h2>
-                <p class="text-xs text-slate-500 mt-0.5">SaddhaTrack V8.4</p>
+                <p class="text-xs text-slate-500 mt-0.5">SaddhaTrack V8.5</p>
             </div>
         </div>
         <nav class="flex-1 p-4 space-y-2">
@@ -213,10 +236,8 @@
                 <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg> ข้อมูลสิ่งศักดิ์สิทธิ์
             </button>
         </nav>
-        <div class="p-4 border-t border-slate-100">
-            <button onclick="logout()" class="w-full text-left px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 font-bold flex items-center gap-3 transition-colors">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg> ออกจากระบบ
-            </button>
+        <div class="p-4 border-t border-slate-100" id="sidebarAuthArea">
+            <!-- Dynamic Buttons (Login/Logout) -->
         </div>
     </div>
 
@@ -443,7 +464,7 @@
         let tempReviewRating = 0;
         let currentPlaceName = "";
         
-        // DEITY DATA (16 Items) FULL CHANTS RESTORED
+        // DEITY DATA (16 Items)
         const deitiesData = [
             { id: 1, name: "พระพิฆเนศ", desc: "เทพแห่งความสำเร็จ ขจัดอุปสรรค", text: "โอม ศรี คเณศายะ นะมะฮา", offer: "นมสด, น้ำแดง, ขนมลาดู, ดอกดาวเรือง", img: "https://upload.wikimedia.org/wikipedia/commons/c/c2/Ganesha_Basohli_miniature_circa_1730_Dubost_p73.jpg" },
             { id: 2, name: "พระแม่ลักษมี", desc: "มหาเทวีแห่งความร่ำรวย ความรัก", text: "โอม ชยะ ศรี ลักษมี มาตา", offer: "ดอกบัวสีชมพู, นมสด, ขนมหวาน", img: "https://upload.wikimedia.org/wikipedia/commons/e/e6/Raja_Ravi_Varma_-_Goddess_Lakshmi.jpg" },
@@ -469,14 +490,38 @@
         // --- AUTH & INIT SYSTEM ---
         window.onload = () => {
             currentUser = JSON.parse(localStorage.getItem('saddha_user'));
-            if (currentUser) {
-                document.getElementById('authView').classList.add('hidden');
-                document.getElementById('greetingName').innerText = `${currentUser.name}`; // นำคำว่า "คุณ" ออก ลบไอคอนมือไหว้
-                initMapSystem();
-            } else {
-                document.getElementById('authView').classList.remove('hidden');
-            }
+            document.getElementById('authView').classList.add('hidden'); // ซ่อน Auth เป็นค่าเริ่มต้น
+            updateSidebarAuth();
+            initMapSystem();
         };
+
+        function updateSidebarAuth() {
+            const area = document.getElementById('sidebarAuthArea');
+            if (currentUser) {
+                document.getElementById('greetingName').innerText = `${currentUser.name}`; 
+                area.innerHTML = `
+                    <button onclick="logout()" class="w-full text-left px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 font-bold flex items-center gap-3 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg> ออกจากระบบ
+                    </button>
+                `;
+            } else {
+                document.getElementById('greetingName').innerText = `ผู้ใช้งานทั่วไป`;
+                area.innerHTML = `
+                    <button onclick="openAuth()" class="w-full text-left px-4 py-3 rounded-xl text-blue-600 bg-blue-50 font-bold flex items-center gap-3 transition-colors hover:bg-blue-100">
+                        เข้าสู่ระบบ / สมัครสมาชิก
+                    </button>
+                `;
+            }
+        }
+
+        function openAuth() {
+            goHome(); // ปิดทุกอย่างก่อน
+            document.getElementById('authView').classList.remove('hidden');
+        }
+
+        function closeAuth() {
+            document.getElementById('authView').classList.add('hidden');
+        }
 
         function toggleAuthMode() {
             const loginForm = document.getElementById('loginForm');
@@ -500,9 +545,19 @@
                 payload.username = document.getElementById('loginUser').value;
                 payload.password = document.getElementById('loginPass').value;
             } else {
+                const pass = document.getElementById('regPass').value;
+                const confirmPass = document.getElementById('regPassConfirm').value;
+                
+                if (pass !== confirmPass) {
+                    alert("รหัสผ่านไม่ตรงกัน กรุณาตรวจสอบอีกครั้ง");
+                    btn.innerText = originalText;
+                    btn.disabled = false;
+                    return;
+                }
+
                 payload.name = document.getElementById('regName').value;
                 payload.username = document.getElementById('regUser').value;
-                payload.password = document.getElementById('regPass').value;
+                payload.password = pass;
             }
 
             try {
@@ -518,19 +573,19 @@
                     const userData = { name: result.name, username: result.username };
                     localStorage.setItem('saddha_user', JSON.stringify(userData));
                     currentUser = userData;
-                    document.getElementById('greetingName').innerText = `${currentUser.name}`; 
+                    
+                    updateSidebarAuth();
                     
                     document.getElementById('authView').classList.add('fade-out');
                     setTimeout(() => {
-                        document.getElementById('authView').classList.add('hidden');
-                        initMapSystem();
+                        closeAuth();
+                        document.getElementById('authView').classList.remove('fade-out');
                     }, 400);
                 } else {
                     alert("❌ ข้อผิดพลาด: " + result.message);
                 }
             } catch (err) {
                 alert("เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล กรุณาลองใหม่อีกครั้ง");
-                console.error(err);
             }
             btn.innerText = originalText;
             btn.disabled = false;
@@ -665,6 +720,9 @@
         function closeView(id) { document.getElementById(id).classList.remove('active', 'flex'); document.getElementById(id).classList.add('hidden'); if(id === 'placeView') setTimeout(() => map.invalidateSize(), 300); }
         
         function openForm(placeName, isManual) {
+            // Require Login
+            if (!currentUser) { openAuth(); return; }
+
             goHome(); 
             const placeInput = document.getElementById('placeInput');
             if (isManual) { placeInput.value = ""; placeInput.readOnly = false; placeInput.classList.remove('bg-slate-100', 'text-slate-500'); placeInput.classList.add('bg-white', 'text-slate-900'); placeInput.focus(); } 
@@ -721,7 +779,7 @@
             document.getElementById('placeView').classList.remove('hidden'); document.getElementById('placeView').classList.add('active');
         }
 
-        // --- API SAVING (Send Prayer to Sheet) ---
+        // --- API SAVING ---
         async function savePrayer(event) {
             event.preventDefault();
             const btn = document.getElementById('saveButton'); const origText = btn.innerText;
@@ -739,11 +797,9 @@
                 status: 'pending', date: new Date().toLocaleDateString('th-TH')
             };
 
-            // Save Local first
             try { const existing = localStorage.getItem('saddha_prayers'); prayers = existing ? JSON.parse(existing) : []; } catch(e) { prayers = []; }
             prayers.push(newItem); localStorage.setItem('saddha_prayers', JSON.stringify(prayers));
 
-            // Save to Cloud via text/plain
             try {
                 const payload = { ...newItem, action: "save_prayer", user: currentUser.username };
                 await fetch(API_URL, { 
@@ -758,6 +814,9 @@
         }
 
         function openProfile() { 
+            // Require Login
+            if (!currentUser) { openAuth(); return; }
+
             goHome(); try { prayers = JSON.parse(localStorage.getItem('saddha_prayers')) || []; } catch(e) { prayers = []; } 
             renderPrayerList(); document.getElementById('profileView').classList.remove('hidden'); document.getElementById('profileView').classList.add('active'); 
         }
@@ -798,9 +857,12 @@
         }
         
         function toggleEditMode() {} function deleteCurrentItem() { if(!currentDetailId) return; if(confirm("ลบรายการนี้?")) { prayers = prayers.filter(p => p.id !== currentDetailId); localStorage.setItem('saddha_prayers', JSON.stringify(prayers)); openProfile(); } }
-        function openReviewForm() { document.getElementById('reviewPlaceNameTarget').innerText = `รีวิว: ${currentPlaceName}`; document.getElementById('reviewText').value = ""; setReviewRating(5); document.getElementById('reviewFormView').classList.remove('hidden'); document.getElementById('reviewFormView').classList.add('active'); }
+        function openReviewForm() { 
+            if (!currentUser) { openAuth(); return; }
+            document.getElementById('reviewPlaceNameTarget').innerText = `รีวิว: ${currentPlaceName}`; document.getElementById('reviewText').value = ""; setReviewRating(5); document.getElementById('reviewFormView').classList.remove('hidden'); document.getElementById('reviewFormView').classList.add('active'); 
+        }
         function setReviewRating(n) { tempReviewRating = n; const stars = document.querySelectorAll('.review-star'); stars.forEach((star, index) => { if (index < n) { star.classList.remove('inactive'); star.classList.add('active'); } else { star.classList.remove('active'); star.classList.add('inactive'); } }); }
-        function submitReview() { const text = document.getElementById('reviewText').value; if(!text) { alert("กรุณาเขียนรีวิวสั้นๆ ก่อนส่งครับ"); return; } const reviews = JSON.parse(localStorage.getItem('saddha_place_reviews')) || {}; if (!reviews[currentPlaceName]) reviews[currentPlaceName] = []; reviews[currentPlaceName].unshift({ user: "Me", rating: tempReviewRating, text: text, date: new Date().toLocaleDateString('th-TH') }); localStorage.setItem('saddha_place_reviews', JSON.stringify(reviews)); closeView('reviewFormView'); openPlacePreview(currentPlaceName); alert("ขอบคุณสำหรับรีวิวครับ 🙏"); }
+        function submitReview() { const text = document.getElementById('reviewText').value; if(!text) { alert("กรุณาเขียนรีวิวสั้นๆ ก่อนส่งครับ"); return; } const reviews = JSON.parse(localStorage.getItem('saddha_place_reviews')) || {}; if (!reviews[currentPlaceName]) reviews[currentPlaceName] = []; reviews[currentPlaceName].unshift({ user: currentUser.name, rating: tempReviewRating, text: text, date: new Date().toLocaleDateString('th-TH') }); localStorage.setItem('saddha_place_reviews', JSON.stringify(reviews)); closeView('reviewFormView'); openPlacePreview(currentPlaceName); alert("ขอบคุณสำหรับรีวิวครับ 🙏"); }
         function toggleNotification() { const item = prayers.find(p => p.id === currentDetailId); if (!item) return; item.notificationsEnabled = document.getElementById('notifToggle').checked; saveData(); }
         function saveNotificationDate() { const item = prayers.find(p => p.id === currentDetailId); if (!item) return; item.customNotificationDate = document.getElementById('customNotifDate').value; saveData(); }
         function setTempRating(n) { tempRating = n; renderStars(n); }
