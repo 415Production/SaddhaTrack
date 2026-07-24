@@ -11,7 +11,6 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
         
-        /* --- MOBILE APP FEEL (Safe for iOS & Android) --- */
         html, body {
             font-family: 'Sarabun', sans-serif;
             width: 100%; height: 100%; overflow: hidden; background-color: #ffffff;
@@ -71,7 +70,6 @@
         
         <div class="bg-white p-8 rounded-[2.5rem] w-11/12 max-w-sm relative z-10 w-full">
             <div class="text-center mb-8">
-                <!-- โลโก้ถูกล็อคขนาดไว้อย่างชัดเจน ป้องกันการแตกหรือล้นจอ -->
                 <img src="SaddhaTrack_Logo.png" alt="SaddhaTrack Logo" class="mx-auto mb-4 object-contain" style="width: 120px; height: 120px;">
                 <p class="text-slate-500 text-sm mt-2 font-medium">เข้าสู่ระบบเพื่อบันทึกข้อมูลของคุณ</p>
             </div>
@@ -286,6 +284,7 @@
                 </div>
                 <div class="bg-blue-50 p-6 rounded-3xl shadow-sm border border-blue-100 relative overflow-hidden">
                     <h3 class="text-xs font-bold text-blue-600 uppercase tracking-wide mb-3">บทสวดบูชา</h3>
+                    <!-- บทสวดตัดบรรทัด (whitespace-normal) -->
                     <p id="deityChant" class="text-lg text-slate-800 font-serif italic text-center py-4 leading-relaxed tracking-wide whitespace-normal break-words">...</p>
                 </div>
             </div>
@@ -462,16 +461,7 @@
         const categoryLabels = { 'work': 'การงาน / ความสำเร็จ', 'finance': 'โชคลาภ / การเงิน', 'love': 'ความรัก / คู่ครอง', 'health': 'สุขภาพ / รักษาโรค', 'general': 'ทั่วไป / คุ้มครอง' };
         const blueIcon = L.divIcon({ className: 'custom-div-icon', html: `<div style="background-color: white; width: 14px; height: 14px; border-radius: 50%; border: 4px solid #3b82f6; box-shadow: 0 4px 6px rgba(0,0,0,0.3);"></div>`, iconSize: [16, 16], iconAnchor: [8, 8] });
 
-        // --- NAVIGATION STATE CONTROL ---
-        function setNavState(isHome) {
-            const inner = document.getElementById('bottomNavInner');
-            if (isHome) {
-                inner.className = "pointer-events-auto bg-white/95 backdrop-blur-xl flex justify-between items-center relative transition-all duration-300 mx-6 mb-6 rounded-[2rem] border border-slate-100 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.15)] px-6 py-3";
-            } else {
-                inner.className = "pointer-events-auto bg-white/95 backdrop-blur-xl flex justify-between items-center relative transition-all duration-300 mx-0 mb-0 rounded-t-[2rem] border-t border-slate-200 shadow-[0_-10px_40px_-10px_rgba(0,0,0,0.05)] px-8 py-4";
-            }
-        }
-
+        // --- NAVIGATION LOGIC ---
         function updateNavActive(activeId) {
             const btns = {
                 'home': document.getElementById('nav-home'),
@@ -490,12 +480,6 @@
                     }
                 }
             }
-        }
-
-        function checkNavState() {
-            const views = ['profileView', 'chantsView', 'formView', 'detailView', 'placeView', 'reviewFormView', 'deityView'];
-            const isAnyViewOpen = views.some(id => document.getElementById(id).style.display === 'flex');
-            setNavState(!isAnyViewOpen);
         }
 
         // --- INIT SYSTEM ---
@@ -567,13 +551,8 @@
                     const userData = { name: result.name, username: result.username };
                     localStorage.setItem('saddha_user', JSON.stringify(userData)); currentUser = userData;
                     updateSidebarAuth();
-                    
                     document.getElementById('authView').classList.add('fade-out');
-                    setTimeout(() => { 
-                        closeAuth(); 
-                        document.getElementById('authView').classList.remove('fade-out'); 
-                        goHome(); 
-                    }, 400);
+                    setTimeout(() => { closeAuth(); document.getElementById('authView').classList.remove('fade-out'); goHome(); }, 400);
                 } else { alert("❌ ข้อผิดพลาด: " + result.message); }
             } catch (err) { alert("เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล กรุณาลองใหม่อีกครั้ง"); }
             btn.innerText = originalText; btn.disabled = false;
@@ -621,7 +600,7 @@
         }
 
         async function loadTemplesNearby(lat, lng) {
-            const query = `[out:json][timeout:10];(node["amenity"="place_of_worship"](around:3000, ${lat}, ${lng});way["amenity"="place_of_worship"](around:3000, ${lat}, ${lng}););out center;`;
+            const query = `[out:json][timeout:15];(node["amenity"="place_of_worship"](around:5000, ${lat}, ${lng});way["amenity"="place_of_worship"](around:5000, ${lat}, ${lng}););out center;`;
             try {
                 const response = await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`);
                 if (!response.ok) throw new Error('API Error');
@@ -629,7 +608,8 @@
                 let templesToSave = [];
                 if (data.elements) {
                     data.elements.forEach(element => {
-                        const name = element.tags['name:th'] || element.tags.name;
+                        // ดึงชื่อภาษาไทยก่อน ถ้าไม่มีดึงภาษาอังกฤษ ถ้าไม่มีอีกให้ดึงชื่อท้องถิ่น
+                        const name = element.tags['name:th'] || element.tags['name:en'] || element.tags.name;
                         if ((element.lat || element.center) && name) templesToSave.push({ lat: element.lat || element.center.lat, lng: element.lon || element.center.lon, name: name });
                     });
                 }
@@ -643,7 +623,7 @@
                 console.error(err);
                 const searchBtn = document.getElementById('searchAreaBtn');
                 if (searchBtn) {
-                    searchBtn.innerHTML = "เซิร์ฟเวอร์หน่วง กรุณาลองใหม่";
+                    searchBtn.innerHTML = "เซิร์ฟเวอร์โหลดข้อมูลไม่ทัน กรุณาลองใหม่";
                     searchBtn.classList.remove('hidden');
                     setTimeout(() => { searchBtn.innerHTML = "ค้นหาบริเวณนี้"; }, 3000);
                 }
@@ -654,8 +634,9 @@
             let hash = 0; for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
             const famousMap = [ { text: "ขอพรความรัก", cat: "love" }, { text: "โชคลาภ/หวย", cat: "wealth" }, { text: "การงาน/เลื่อนขั้น", cat: "work" } ];
             let religion = 'buddhist';
-            if (name.includes('ศาล') || name.includes('เจ้า')) religion = 'chinese'; 
-            else if (name.includes('เทว') || name.includes('พระแม่') || name.includes('พรหม')) religion = 'hindu';
+            const lowerName = name.toLowerCase();
+            if (lowerName.includes('ศาล') || lowerName.includes('เจ้า') || lowerName.includes('shrine')) religion = 'chinese'; 
+            else if (lowerName.includes('เทว') || lowerName.includes('พระแม่') || lowerName.includes('พรหม') || lowerName.includes('hindu')) religion = 'hindu';
             return { famous: famousMap[Math.abs(hash % famousMap.length)].text, category: famousMap[Math.abs(hash % famousMap.length)].cat, religion: religion };
         }
 
@@ -712,7 +693,8 @@
             clearTimeout(searchTimeout); document.getElementById('searchStatus').innerHTML = '<div class="w-4 h-4 border-2 border-slate-300 border-t-blue-600 rounded-full animate-spin"></div>';
             searchTimeout = setTimeout(async () => {
                 try {
-                    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=th&limit=5&accept-language=th`;
+                    // ลบ countrycodes=th ออก เพื่อให้ค้นหาทั่วโลกได้
+                    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&accept-language=th,en`;
                     const res = await fetch(url); const results = await res.json();
                     list.innerHTML = '';
                     if (results.length > 0) { list.classList.remove('hidden'); results.forEach(place => { const li = document.createElement('li'); li.className = "px-4 py-3 border-b border-slate-50 hover:bg-slate-100 cursor-pointer text-sm text-slate-700 flex items-center justify-between rounded-xl transition-colors"; li.innerHTML = `<span>${place.display_name.split(',')[0]}</span>`; li.onclick = () => { selectSearchResult(place.lat, place.lon, place.display_name.split(',')[0]); }; list.appendChild(li); }); } 
@@ -735,19 +717,14 @@
         function goHome() { 
             const sb = document.getElementById('sidebarMenu'); const ol = document.getElementById('sidebarOverlay');
             if (!sb.classList.contains('hidden')) { sb.classList.remove('slide-in'); sb.classList.add('slide-out'); setTimeout(() => sb.classList.add('hidden'), 300); ol.classList.add('hidden'); }
-            
-            const views = ['profileView', 'chantsView', 'formView', 'detailView', 'placeView', 'reviewFormView', 'deityView'];
-            views.forEach(id => { document.getElementById(id).style.display = 'none'; });
-            
-            if(userMarker) map.setView(userMarker.getLatLng(), 16); 
+            const views = document.querySelectorAll('.z-view'); views.forEach(v => { v.classList.remove('active', 'flex'); v.classList.add('hidden'); });
+            if(userMarker) map.setView(userMarker.getLatLng(), 16); setTimeout(() => map.invalidateSize(), 300);
             updateNavActive('home'); 
-            checkNavState();
         }
 
         function closeView(id) { 
             document.getElementById(id).style.display = 'none'; 
             if(id === 'placeView') setTimeout(() => map.invalidateSize(), 300); 
-            checkNavState(); 
         }
         
         function openForm(placeName, isManual) {
@@ -756,12 +733,9 @@
             const placeInput = document.getElementById('placeInput');
             if (isManual) { placeInput.value = ""; placeInput.readOnly = false; placeInput.classList.remove('bg-slate-100', 'text-slate-500'); placeInput.classList.add('bg-white', 'text-slate-900'); placeInput.focus(); } 
             else { placeInput.value = placeName; placeInput.readOnly = true; placeInput.classList.add('bg-slate-100', 'text-slate-500'); placeInput.classList.remove('bg-white'); }
-            document.getElementById('prayerForm').reset(); 
-            
-            document.getElementById('formView').style.display = 'flex';
+            document.getElementById('prayerForm').reset(); document.getElementById('formView').style.display = 'flex';
             if (!isManual) placeInput.value = placeName;
             updateNavActive('');
-            checkNavState();
         }
 
         function closePlacePreview() {
@@ -814,9 +788,9 @@
             btnContainer.replaceChild(newBtn, document.getElementById('viewPlaceRecordBtn'));
 
             document.getElementById('placeView').style.display = 'flex';
-            checkNavState();
         }
 
+        // --- API SAVING (Send Prayer to Sheet) ---
         async function savePrayer(event) {
             event.preventDefault();
             const btn = document.getElementById('saveButton'); const origText = btn.innerText;
@@ -852,12 +826,9 @@
 
         function openProfile() { 
             if (!currentUser) { openAuth(); return; }
-            goHome(); 
-            try { prayers = JSON.parse(localStorage.getItem('saddha_prayers')) || []; } catch(e) { prayers = []; } 
-            renderPrayerList(); 
-            document.getElementById('profileView').style.display = 'flex';
+            goHome(); try { prayers = JSON.parse(localStorage.getItem('saddha_prayers')) || []; } catch(e) { prayers = []; } 
+            renderPrayerList(); document.getElementById('profileView').style.display = 'flex'; 
             updateNavActive('profile'); 
-            checkNavState();
         }
         
         function renderPrayerList() {
@@ -893,15 +864,12 @@
             if (item.status === 'pending') { actionsDiv.innerHTML = `<div class="grid grid-cols-2 gap-3"><button onclick="markStatus('success')" class="bg-blue-600 text-white py-3 rounded-xl font-bold shadow-lg hover:scale-105 active:scale-95 transition-all">✅ สำเร็จ</button><button onclick="markStatus('fail')" class="bg-white border border-slate-200 text-slate-700 py-3 rounded-xl font-bold hover:bg-slate-50 transition-colors">❌ ไม่สำเร็จ</button></div>`; } 
             else if (item.status === 'waiting_vow') { actionsDiv.innerHTML = `<div class="p-4 bg-orange-50 text-orange-600 rounded-2xl text-center font-bold">🙏 รอแก้บน</div>`; } 
             else { actionsDiv.innerHTML = `<div class="p-4 bg-slate-100 text-slate-500 rounded-2xl text-center font-bold">จบรายการแล้ว</div>`; }
-            
             document.getElementById('detailView').style.display = 'flex'; 
-            checkNavState();
         }
         function markStatus(s) { const item = prayers.find(p => p.id === currentDetailId); if(!item) return; item.status = s === 'success' ? 'waiting_vow' : 'fail'; localStorage.setItem('saddha_prayers', JSON.stringify(prayers)); alert("บันทึกสถานะเรียบร้อย"); openProfile(); }
 
         function openChants() {
-            goHome(); 
-            const container = document.getElementById('chantsContainer'); container.innerHTML = '';
+            goHome(); const container = document.getElementById('chantsContainer'); container.innerHTML = '';
             deitiesData.forEach(c => { 
                 const isFav = favorites.includes(c.id);
                 const heartClass = isFav ? "text-red-500 fill-current" : "text-slate-300";
@@ -919,9 +887,7 @@
                     </div>
                 `; container.appendChild(el); 
             });
-            document.getElementById('chantsView').style.display = 'flex'; 
-            updateNavActive('chants'); 
-            checkNavState();
+            document.getElementById('chantsView').style.display = 'flex'; updateNavActive('chants');
         }
 
         function toggleFavorite(event, id) {
@@ -945,7 +911,6 @@
             btn.onclick = () => { toggleFavorite(null, id); }; 
 
             document.getElementById('deityView').style.display = 'flex'; 
-            checkNavState();
         }
         
         function toggleEditMode() {} function deleteCurrentItem() { if(!currentDetailId) return; if(confirm("ลบรายการนี้?")) { prayers = prayers.filter(p => p.id !== currentDetailId); localStorage.setItem('saddha_prayers', JSON.stringify(prayers)); openProfile(); } }
